@@ -1,0 +1,68 @@
+[
+  {
+    "name": "Trân Châu",
+    "description": "Trân châu đen dai ngon, được nấu từ bột năng với vị ngọt nhẹ, bổ sung cho đồ uống",
+    "extraPrice": 12000,
+    "status": "available"
+  },
+  {
+    "name": "Pudding",
+    "description": "Pudding mềm mịn với vị ngọt thanh, tạo cảm giác béo ngậy cho đồ uống",
+    "extraPrice": 16800,
+    "status": "available"
+  },
+  {
+    "name": "Thạch Thảo Mộc",
+    "description": "Thạch trong suốt từ thảo mộc tự nhiên, mát lành và thanh nhiệt",
+    "extraPrice": 12000,
+    "status": "available"
+  },
+  {
+    "name": "Đậu Đỏ",
+    "description": "Đậu đỏ nấu chín mềm với vị ngọt thanh tự nhiên, bổ dưỡng",
+    "extraPrice": 14400,
+    "status": "available"
+  },
+  {
+    "name": "Thạch Trái Cây",
+    "description": "Thạch nhiều màu sắc với hương vị trái cây tươi mát",
+    "extraPrice": 14400,
+    "status": "available"
+  },
+  {
+    "name": "Kem Phô Mai",
+    "description": "Kem phô mai béo ngậy, thơm mịn, tạo vị đậm đà cho đồ uống",
+    "extraPrice": 19200,
+    "status": "available"
+  },
+  {
+    "name": "Kem Tươi",
+    "description": "Kem tươi mát lạnh, bổ sung cho sinh tố và đồ uống đá xay",
+    "extraPrice": 12000,
+    "status": "available"
+  },
+  {
+    "name": "Nha Đam",
+    "description": "Nha đam tươi mát, trong suốt, tốt cho sức khỏe và làm mát cơ thể",
+    "extraPrice": 12000,
+    "status": "available"
+  },
+  {
+    "name": "Pudding Trứng",
+    "description": "Pudding trứng mềm mượt với vị thơm đậm đà, béo ngậy",
+    "extraPrice": 16800,
+    "status": "available"
+  },
+  {
+    "name": "Socola Chip",
+    "description": "Chip socola giòn tan với vị đắng nhẹ, tạo điểm nhấn cho đồ uống",
+    "extraPrice": 14400,
+    "status": "available"
+  },
+  {
+    "name": "Thạch Dừa",
+    "description": "Thạch dừa trong suốt với vị ngọt nhẹ, mát lành",
+    "extraPrice": 4000,
+    "status": "available"
+  }
+]

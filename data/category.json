@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Trà sữa",
+    "description": "Thức uống ngọt ngào, béo ngậy với hương vị trà và sữa.",
+    "status": "available"
+  },
+  {
+    "name": "Bánh ngọt",
+    "description": "Bánh ngọt tươi mới, đa dạng hương vị.",
+    "status": "available"
+  },
+  {
+    "name": "Đồ Uống",
+    "description": "Các loại đồ uống trà sữa và thức uống có sữa đa dạng hương vị",
+    "status": "available"
+  },
+  {
+    "name": "Frappuccino",
+    "description": "Đồ uống đá xay với nhiều hương vị khác nhau, mát lạnh",
+    "status": "available"
+  },
+  {
+    "name": "Sinh Tố",
+    "description": "Các loại sinh tố trái cây tươi ngon, bổ dưỡng",
+    "status": "available"
+  },
+  {
+    "name": "Nước Trái Cây",
+    "description": "Nước ép và đồ uống từ trái cây tự nhiên, tươi mát",
+    "status": "available"
+  },
+  {
+    "name": "Trà",
+    "description": "Các loại trà truyền thống và hiện đại, thanh mát",
+    "status": "available"
+  },
+  {
+    "name": "Cà Phê",
+    "description": "Các loại cà phê và đồ uống có caffeine thơm ngon",
+    "status": "available"
+  }
+]

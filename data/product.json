@@ -1,0 +1,309 @@
+[
+  {
+    "name": "Trà Sữa Khoai Môn",
+    "description": "Trà sữa vị khoai môn ngọt ngào và béo ngậy.",
+    "category": "Đồ Uống",
+    "price": 76600,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 64500
+      },
+      {     
+        "size": "M",
+        "price": 76600
+      },
+      {
+        "size": "L",
+        "price": 88200
+      }
+    ],
+    "toppings": ["Trân Châu", "Pudding"],
+    "status": "unavailable",
+    "images": [
+      "https://web-work.s3.kstorage.vn/uploads/upload/2023/03/upload-16-1679365987005.jpeg",
+      "https://mixop.net/wp-content/uploads/136A0952-1-800x1200.jpg"
+    ]
+  },
+  {
+    "name": "Matcha",
+    "description": "Vị trà matcha Nhật Bản đậm đà với sữa tươi.",
+    "category": "Frappuccino",
+    "price": 83760,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 71760
+      },
+      {
+        "size": "M",
+        "price": 83760
+      }
+    ],
+    "toppings": ["Thạch Thảo Mộc", "Đậu Đỏ", "Thạch Trái Cây"],
+    "status": "available",
+    "images": [
+      "https://cdn.loveandlemons.com/wp-content/uploads/2023/06/iced-matcha-latte-1080x1080.jpg",
+      "https://ttol.vietnamnetjsc.vn/images/2022/07/16/08/43/tra-matcha-001-20220716.jpg"
+    ]
+  },
+  {
+    "name": "Trà Sữa Đường Nâu",
+    "description": "Syrup đường nâu đậm đà kết hợp với sữa và trân châu.",
+    "category": "Đồ Uống",
+    "price": 86160,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 74160
+      },
+      {
+        "size": "M",
+        "price": 86160
+      },
+      {
+        "size": "L",
+        "price": 98160
+      }
+    ],
+    "toppings": ["Trân Châu", "Kem Phô Mai"],
+    "status": "unavailable",
+    "images": [
+      "https://i.pinimg.com/originals/b5/4b/2a/b54b2a7c22083a1c3eb820eb71fa64c8.jpg",
+      "https://eatbook.sg/wp-content/uploads/2019/04/Brown-Sugar-Fresh-Milk-Kung-Fu-Tea.jpg"
+    ]
+  },
+  {
+    "name": "Sinh Tố Dâu",
+    "description": "Đồ uống đá xay vị dâu tươi mát và trái cây.",
+    "category": "Sinh Tố",
+    "price": 95760,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 83760
+      },
+      {
+        "size": "M",
+        "price": 95760
+      },
+      {
+        "size": "L",
+        "price": 107760
+      }
+    ],
+    "toppings": ["Kem Tươi", "Nha Đam"],
+    "status": "available",
+    "images": [
+      "https://tse4.mm.bing.net/th/id/OIP.Tpxpb2alClQ0qvvBiWyzlQHaLH?rs=1&pid=ImgDetMain",
+      "https://www.thespruceeats.com/thmb/NN__HoYeaf66u46Pnd9lISywfwQ=/5472x3648/filters:fill(auto,1)/strawberry-breakfast-smoothie-recipe-2097149-hero-02-5c1d4b2a46e0fb00014bf2ec.jpg"
+    ]
+  },
+  {
+    "name": "Nước Ép Xoài Yakult",
+    "description": "Nước ép xoài tươi kết hợp Yakult probiotic.",
+    "category": "Nước Trái Cây",
+    "price": 86160,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 74160
+      },
+      {
+        "size": "M",
+        "price": 86160
+      },
+      {
+        "size": "L",
+        "price": 98160
+      }
+    ],
+    "toppings": ["Nha Đam", "Thạch Trái Cây"],
+    "status": "available",
+    "images": [
+      "https://static.wixstatic.com/media/67bcc1_8c8a821474b24a288821dd74d0f6911a~mv2.jpeg/v1/fill/w_800,h_800,al_c,q_85/67bcc1_8c8a821474b24a288821dd74d0f6911a~mv2.jpeg",
+      "https://visfoodtech.com.my/wp-content/uploads/2022/11/Yakult-mango-flavour-liquid_.jpg"
+    ]
+  },
+  {
+    "name": "Trà Thái",
+    "description": "Trà Thái truyền thống với vị ngọt béo mịn màng.",
+    "category": "Đồ Uống",
+    "price": 78960,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 66960
+      },
+      {
+        "size": "M",
+        "price": 78960
+      },
+      {
+        "size": "L",
+        "price": 90960
+      }
+    ],
+    "toppings": ["Trân Châu", "Pudding Trứng"],
+    "status": "available",
+    "images": [
+      "https://web-work.s3.kstorage.vn/uploads/upload/2023/03/upload-16-1679365987005.jpeg",
+      "https://thumbs.dreamstime.com/b/thai-milk-tea-bubble-brown-sugar-227617853.jpg"
+    ]
+  },
+  {
+    "name": "Trà Sữa Socola",
+    "description": "Vị socola đậm đà kết hợp với trà sữa béo ngậy.",
+    "category": "Đồ Uống",
+    "price": 81360,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 69360
+      },
+      {
+        "size": "M",
+        "price": 81360
+      },
+      {
+        "size": "L",
+        "price": 93360
+      }
+    ],
+    "toppings": ["Trân Châu", "Socola Chip"],
+    "status": "available",
+    "images": [
+      "https://brewedleaflove.com/wp-content/uploads/2023/01/chocolate-milk-boba-tea-1.jpg",
+      "https://i.pinimg.com/originals/08/70/90/087090785c703c4f83eacd15de5fc472.jpg"
+    ]
+  },
+  {
+    "name": "Trà Sữa Dưa Lưới",
+    "description": "Vị dưa lưới tươi mát kết hợp với trà sữa béo ngậy.",
+    "category": "Đồ Uống",
+    "price": 78960,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 66960
+      },
+      {
+        "size": "M",
+        "price": 78960
+      },
+      {
+        "size": "L",
+        "price": 90960
+      }
+    ],
+    "toppings": ["Trân Châu", "Thạch Trái Cây"],
+    "status": "available",
+    "images": [
+      "https://tse4.mm.bing.net/th/id/OIP.srAHxQ5-Tv_YqWuBUxEDtwHaHa?rs=1&pid=ImgDetMain",
+      "https://modestmunchies.com/wp-content/uploads/2022/12/Honeydew-melon-milk-tea-4-of-6.jpg"
+    ]
+  },
+  {
+    "name": "Trà Nhài",
+    "description": "Trà xanh hoa nhài nhẹ nhàng, thanh mát.",
+    "category": "Trà",
+    "price": 62160,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 52560
+      },
+      {
+        "size": "M",
+        "price": 62160
+      },
+      {
+        "size": "L",
+        "price": 71760
+      }
+    ],
+    "toppings": ["Nha Đam", "Thạch Trái Cây"],
+    "status": "available",
+    "images": [
+      "https://tse1.mm.bing.net/th/id/OIP.GfmY4YohfUPL0wuA6FR0VAHaJQ?rs=1&pid=ImgDetMain",
+      "https://greenheartlove.com/wp-content/uploads/2023/02/jasmine-milk-tea-2-2.jpg"
+    ]
+  },
+  {
+    "name": "Trà Đen Chanh",
+    "description": "Vị chanh tươi chua nhẹ kết hợp trà đen cổ điển.",
+    "category": "Trà",
+    "price": 64560,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 54960
+      },
+      {
+        "size": "M",
+        "price": 64560
+      },
+      {
+        "size": "L",
+        "price": 74160
+      }
+    ],
+    "toppings": ["Thạch Thảo Mộc", "Thạch Trái Cây"],
+    "status": "available",
+    "images": [
+      "https://th.bing.com/th/id/R.60bf9506219310cf28d98bcd5d65e0b0?rik=Z%2bb5at0tcWHsZg&pid=ImgRaw&r=0",
+      "https://th.bing.com/th/id/R.43599c47b601cdc4ee30a4cccd7186d6?rik=%2fglao9DzMdMwdA&pid=ImgRaw&r=0"
+    ]
+  },
+  {
+    "name": "Trà Sữa Thái",
+    "description": "Trà sữa thơm ngon bổ dưỡng",
+    "category": "Cà Phê",
+    "price": 70000,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "S",
+        "price": 80000
+      },
+      {
+        "size": "M",
+        "price": 70000
+      }
+    ],
+    "toppings": ["Trân Châu", "Pudding", "Thạch Dừa"],
+    "status": "available",
+    "images": [
+      "https://web-work.s3.kstorage.vn/uploads/upload/2023/03/upload-16-1679365987005.jpeg",
+      "https://mixop.net/wp-content/uploads/136A0952-1-800x1200.jpg"
+    ]
+  },
+  {
+    "name": "Trà Sữa Ô Long",
+    "description": "Ô Long thơm ngon",
+    "category": "Trà",
+    "price": 30000,
+    "currency": "VNĐ",
+    "sizeOptions": [
+      {
+        "size": "M",
+        "price": 30000
+      }
+    ],
+    "toppings": ["Trân Châu", "Thạch Dừa", "Kem Phô Mai"],
+    "status": "unavailable",
+    "images": [
+      "https://th.bing.com/th/id/OIP.Az5dVIEa770xb_fmCKZA1gHaHa?rs=1&pid=ImgDetMain"
+    ]
+  }
+]
