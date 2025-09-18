@@ -1,12 +1,14 @@
 import bcryptjs from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-
+import { OAuth2Client } from 'google-auth-library';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 
 import { sendVerificationOTP, sendVerificationLinkEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mail/email.js";
 
 import User from "../models/User.model.js";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 //! Register function to create a new user
 export const register = async (req, res) => {
@@ -52,8 +54,8 @@ export const register = async (req, res) => {
 
         await newUser.save();
 
-        // Auto login (but not verify email)
-        generateTokenAndSetCookie(res, newUser._id);
+        // Auto login (but not verify email) - default remember me false for registration
+        generateTokenAndSetCookie(res, newUser._id, false);
 
         res.status(201).json({
             success: true,
@@ -285,7 +287,7 @@ export const checkEmailLink = async (req, res) => {
                 loginRequired: !autoLogin, // FE có thể dựa vào flag này để điều hướng
             });
         }
-        
+
         return res.json({ success: true, message: "Xác minh email thành công", loginRequired: !autoLogin });
 
     } catch (error) {
@@ -348,7 +350,7 @@ export const resendVerificationEmail = async (req, res) => {
 
 //! Login function to authenticate user
 export const login = async (req, res) => {
-    const { email, password } = req.body;
+    const { email, password, rememberMe = false } = req.body;
 
     try {
         // Validate input
@@ -370,8 +372,8 @@ export const login = async (req, res) => {
             return res.status(400).json({ success: false, message: "Mật khẩu không đúng" });
         }
 
-        // Generate token and set cookie
-        generateTokenAndSetCookie(res, user._id);
+        // Generate token and set cookie with rememberMe option
+        generateTokenAndSetCookie(res, user._id, rememberMe);
 
         // Update last login time
         user.lastLogin = Date.now();
@@ -547,3 +549,97 @@ export const logout = (req, res) => {
         return res.status(500).json({ success: false, message: "Lỗi kết nối đến máy chủ" });
     }
 };
+
+//! Google OAuth Login/Register
+export const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        if (!credential) {
+            return res.status(400).json({
+                success: false,
+                message: "Google credential is required"
+            });
+        }
+
+        // Verify Google token
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const {
+            sub: googleId,
+            email,
+            name,
+            picture,
+            email_verified
+        } = payload;
+
+        console.log("Google payload:", { googleId, email, name, email_verified });
+
+        // Check if user exists with this email
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // User exists - update Google info if needed
+            console.log("User exists, updating Google info...");
+
+            if (!user.googleId) {
+                user.googleId = googleId;
+                user.avatar = picture;
+                user.provider = 'google';
+                user.isVerified = email_verified;
+                await user.save();
+            }
+        } else {
+            // Create new user from Google info
+            console.log("Creating new user from Google...");
+
+            user = new User({
+                userName: name,
+                email,
+                googleId,
+                avatar: picture,
+                provider: 'google',
+                isVerified: email_verified,
+                phoneNumber: '', // Will be updated later if needed
+                password: 'google-oauth-placeholder', // Placeholder since Google users don't need password
+                role: 'user',
+                status: 'active'
+            });
+            await user.save();
+        }
+
+        // Update last login
+        user.lastLogin = new Date();
+        await user.save();
+
+        // Generate JWT token and set cookie
+        generateTokenAndSetCookie(res, user._id);
+
+        res.status(200).json({
+            success: true,
+            message: user.provider === 'google' ? "Đăng nhập Google thành công" : "Tài khoản được liên kết với Google",
+            user: {
+                ...user._doc,
+                password: undefined, // Don't send password
+            },
+        });
+    } catch (error) {
+        console.error("Google login error:", error);
+
+        if (error.message.includes('Token used too early')) {
+            return res.status(400).json({
+                success: false,
+                message: "Token Google không hợp lệ hoặc đã hết hạn"
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi xác thực Google"
+        });
+    }
+}

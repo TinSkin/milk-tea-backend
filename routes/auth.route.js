@@ -13,6 +13,7 @@ import {
 } from "../controllers/auth.controller.js";
 import { verifyToken, verifyEmail } from "../middlewares/verifyToken.js";
 import { rateLimitResendEmail } from "../middlewares/rateLimitResend.js"
+import { googleLogin } from "../controllers/auth.controller.js";
 
 const router = express.Router();
 
@@ -25,16 +26,19 @@ router.post("/login", login);
 router.post("/logout", logout);
 
 //! Email verification routes - DUAL Flow
-{/* //* Email Link Flow */}
+{/* //* Email Link Flow */ }
 router.post("/verify-email", checkEmailLink);
 router.post("/resend-verification-email", rateLimitResendEmail, resendVerificationEmail);
 
-{/* //* Email OTP Flow */}
+{/* //* Email OTP Flow */ }
 router.post("/verify-otp", verifyToken, checkOTP);
 router.post("/resend-otp", rateLimitResendEmail, resendVerificationOTP);
 
 //! Password reset routes
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
+
+//! Google OAuth route
+router.post("/google", googleLogin);
 
 export default router;
