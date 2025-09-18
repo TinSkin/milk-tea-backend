@@ -7,7 +7,11 @@ const userSchema = new mongoose.Schema({
     },
     phoneNumber: {
         type: String,
-        required: true,
+        required: function() {
+            // Only required for local registration, not for Google OAuth
+            return this.provider === 'local' || !this.provider;
+        },
+        default: '',
     },
     email: {
         type: String,
@@ -16,7 +20,11 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
+        required: function() {
+            // Only required for local registration, not for Google OAuth
+            return this.provider === 'local' || !this.provider;
+        },
+        default: '',
     },
     lastLogin: {
         type: Date,
@@ -35,6 +43,20 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['active', 'inactive', 'banned', 'suspended'],
         default: 'active'
+    },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true // Allows null values but ensures uniqueness when present
+    },
+    avatar: {
+        type: String,
+        default: null
+    },
+    provider: {
+        type: String,
+        enum: ['local', 'google'],
+        default: 'local'
     },
     // Reset Password Token
     resetPasswordToken: String,
