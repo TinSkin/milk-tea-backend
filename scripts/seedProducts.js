@@ -13,8 +13,8 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-//! Seed data for categories, toppings, and products
-const seedData = async () => {
+//! Seed products, categories, and toppings
+const seedProduct = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('Đã kết nối MongoDB');
@@ -24,7 +24,22 @@ const seedData = async () => {
         const toppings = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/topping.json')));
         const products = JSON.parse(fs.readFileSync(path.join(__dirname, '../data/product.json')));
 
-        // Clear existing data
+        // Check if data already exists
+        const categoryCount = await Category.countDocuments();
+        const toppingCount = await Topping.countDocuments();
+        const productCount = await Product.countDocuments();
+
+        if (categoryCount > 0 && toppingCount > 0 && productCount > 0) {
+            console.log('Data already exists:');
+            console.log(`Categories: ${categoryCount}`);
+            console.log(`Toppings: ${toppingCount}`);
+            console.log(`Products: ${productCount}`);
+            console.log('Skipping seeding. Use force flag to reseed.');
+            return;
+        }
+
+        console.log('Clearing existing data...');
+        // Clear existing data only if needed
         await Category.deleteMany();
         await Topping.deleteMany();
         await Product.deleteMany();
@@ -67,4 +82,4 @@ const seedData = async () => {
     }
 };
 
-seedData();
+seedProduct();

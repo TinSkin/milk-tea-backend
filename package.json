@@ -7,9 +7,9 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "seed": "node scripts/seed.js",
-    "seed:admin": "node scripts/admin.js",
-    "seed:users": "node scripts/sampleUsers.js"
+    "seed:products": "node scripts/seedProducts.js",
+    "seed:stores": "node scripts/seedStores.js",
+    "seed:users": "node scripts/seedUsers.js"
   },
   "keywords": [],
   "author": "",

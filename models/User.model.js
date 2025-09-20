@@ -36,8 +36,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['user', 'admin', 'manager'],
-        default: 'user'
+        enum: ['customer', 'staff', 'storeManager', 'admin'],
+        default: 'customer'
     },
     status: {
         type: String,
@@ -57,6 +57,30 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['local', 'google'],
         default: 'local'
+    },
+    
+    // Store/Location Management Fields
+    assignedStoreId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Store',
+        required: function() {
+            // Required for staff and storeManager
+            return ['staff', 'storeManager'].includes(this.role);
+        },
+        default: null
+    },
+    
+    managedStores: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Store'
+    }], // For admins who can manage multiple stores
+    
+    permissions: {
+        canManageProducts: { type: Boolean, default: false },
+        canManageOrders: { type: Boolean, default: false },
+        canManageUsers: { type: Boolean, default: false },
+        canViewReports: { type: Boolean, default: false },
+        canManageStores: { type: Boolean, default: false }
     },
     // Reset Password Token
     resetPasswordToken: String,

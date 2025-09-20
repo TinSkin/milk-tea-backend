@@ -17,8 +17,8 @@ const productSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true,
-        trim: true, //! Delete empty space
-        maxLength: [100, 'Tên sản phẩm không được quá 100 ký tự'] //! Max length of name is 100
+        trim: true,
+        maxLength: [100, 'Tên sản phẩm không được quá 100 ký tự'] 
     },
     description: {
         type: String,
@@ -54,7 +54,7 @@ const productSchema = new mongoose.Schema({
         ref: "Topping"
     }],
 
-    //! SEO fields
+    //! SEO
     metaTitle: {
         type: String,
         maxLength: [60, 'Meta title không được quá 60 ký tự']

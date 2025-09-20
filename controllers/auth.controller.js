@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 
 import { sendVerificationOTP, sendVerificationLinkEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mail/email.js";
+import { shouldVerifyGoogleUser, getVerificationReason } from "../utils/verificationRules.js";
 
 import User from "../models/User.model.js";
 
@@ -37,20 +38,6 @@ export const register = async (req, res) => {
             password: hashedPassword,
             isVerified: false, // Initially set to false
         });
-
-        // Generate verification code (6 digits)
-        const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
-        newUser.verificationCode = verificationCode;
-        newUser.verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-
-        // Generate verification email (Link)
-        const verificationToken = jwt.sign(
-            { userId: newUser._id.toString() },
-            process.env.JWT_SECRET,
-            { expiresIn: "15m" }
-        );
-        newUser.verificationToken = verificationToken;
-        newUser.verificationTokenExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
         await newUser.save();
 
@@ -120,7 +107,11 @@ export const checkOTP = async (req, res) => {
         await user.save();
 
         // Send a welcome email to the user
-        await sendWelcomeEmail(user.email, user.userName);
+        try {
+            await sendWelcomeEmail(user.email, user.userName);
+        } catch (e) {
+            console.error("sendWelcomeEmail error:", e);
+        }
 
         // Generate token and set cookie (auto login when verified)
         generateTokenAndSetCookie(res, user._id);
@@ -228,14 +219,28 @@ export const checkEmailLink = async (req, res) => {
             return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
         }
 
-        // If user is verified, return OK
+        // If user is verified, return OK with proper response format
         if (user.isVerified) {
             if (user.verificationToken || user.verificationTokenExpiresAt) {
                 user.verificationToken = undefined;
                 user.verificationTokenExpiresAt = undefined;
                 await user.save();
             }
-            return res.json({ success: true, message: "Email đã được xác minh trước đó" });
+            
+            // For frontend consistency, return same format as successful verification
+            return res.json({ 
+                success: true, 
+                message: "Email đã được xác minh trước đó",
+                user: {
+                    ...user._doc,
+                    password: undefined,
+                    verificationCode: undefined,
+                    verificationCodeExpiresAt: undefined,
+                    verificationToken: undefined,
+                    verificationTokenExpiresAt: undefined,
+                },
+                isAuthenticated: true,
+            });
         }
 
         // Prevent using expired or invalid tokens: compare to token in DB with token sent by client (Cross-check token)
@@ -256,6 +261,9 @@ export const checkEmailLink = async (req, res) => {
         user.verificationCode = undefined;
         user.verificationCodeExpiresAt = undefined;
 
+        // Update last login time
+        user.lastLogin = new Date();
+
         await user.save();
 
         // Send a welcome email to the user
@@ -265,30 +273,22 @@ export const checkEmailLink = async (req, res) => {
             console.error("sendWelcomeEmail error:", e);
         }
 
-        //* Auto-login when verified, check for existing token
-        // - If request has existing token (cookie or auth header/bearer) of this user -> refresh token/cookie
-        // - If no existing token, generate new token and set cookie -> using for redirect to login page
-        const existing = req.cookies?.token || req.headers.authorization?.replace(/^Bearer\s+/i, "");
-        let autoLogin = false;
-        if (existing) {
-            try {
-                const dec = jwt.verify(existing, process.env.JWT_SECRET);
-                const decId = dec.id || dec.userId || dec._id;
-                autoLogin = String(decId) === String(user._id);
-            } catch (_) { }
+        // Generate token and set cookie (auto login when verified)
+        generateTokenAndSetCookie(res, user._id);
 
-            // Generate token and set cookie (auto login when verified)
-            if (autoLogin) {
-                generateTokenAndSetCookie(res, user._id); // refresh cookie nếu muốn
-            }
-            return res.json({
-                success: true,
-                message: "Email đã được xác minh trước đó",
-                loginRequired: !autoLogin, // FE có thể dựa vào flag này để điều hướng
-            });
-        }
-
-        return res.json({ success: true, message: "Xác minh email thành công", loginRequired: !autoLogin });
+        res.status(200).json({
+            success: true,
+            message: "Xác minh email thành công",
+            user: {
+                ...user._doc,
+                password: undefined,
+                verificationCode: undefined,
+                verificationCodeExpiresAt: undefined,
+                verificationToken: undefined,
+                verificationTokenExpiresAt: undefined,
+            },
+            isAuthenticated: true,
+        });
 
     } catch (error) {
         console.error("Error checking email link:", error);
@@ -327,7 +327,9 @@ export const resendVerificationEmail = async (req, res) => {
         user.verificationTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
 
-        const base = process.env.APP_ORIGIN || process.env.CLIENT_URL; // CLIENT_URL
+        const base = process.env.NODE_ENV === 'production'
+            ? process.env.CLIENT_URL_PROD
+            : process.env.CLIENT_URL_DEV;
         const verifyLink = `${base}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
         // 5) Gửi email link
@@ -467,7 +469,10 @@ export const forgotPassword = async (req, res) => {
             await user.save();
 
             // Send email
-            const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+            const base = process.env.NODE_ENV === 'production'
+                ? process.env.CLIENT_URL_PROD
+                : process.env.CLIENT_URL_DEV;
+            const resetLink = `${base}/reset-password/${resetToken}`;
             await sendPasswordResetEmail(user.email, resetLink);
         }
 
@@ -603,14 +608,53 @@ export const googleLogin = async (req, res) => {
                 googleId,
                 avatar: picture,
                 provider: 'google',
-                isVerified: email_verified,
+                isVerified: false, // Will be determined by verification rules
                 phoneNumber: '', // Will be updated later if needed
                 password: 'google-oauth-placeholder', // Placeholder since Google users don't need password
-                role: 'user',
+                role: 'customer',
                 status: 'active'
             });
             await user.save();
         }
+
+        // Check if Google user needs additional verification
+        const needsVerification = shouldVerifyGoogleUser(user, {
+            isNewSession: true,
+            provider: 'google'
+        });
+
+        const verificationReason = getVerificationReason(user, {
+            isNewSession: true,
+            provider: 'google'
+        });
+
+        console.log(`Google verification check for ${email}:`, {
+            needsVerification,
+            reason: verificationReason,
+            userIsVerified: user.isVerified
+        });
+
+        // If user needs verification (new user or not verified yet)
+        if (needsVerification && !user.isVerified) {
+            user.isVerified = false;
+            await user.save();
+
+            console.log(`Google login requires verification for ${email} — deferring token/email send to user's choice.`);
+
+            return res.status(200).json({
+                success: true,
+                message: "Để bảo mật tài khoản, vui lòng xác thực email (chọn phương thức xác thực)",
+                requiresVerification: true,
+                user: {
+                    email: user.email,
+                    provider: 'google'
+                },
+                verificationReason
+            });
+        }
+
+        // No verification needed - user already verified or doesn't need verification
+        user.isVerified = true;
 
         // Update last login
         user.lastLogin = new Date();
