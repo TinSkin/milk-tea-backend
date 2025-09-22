@@ -17,7 +17,7 @@ export const getAllProducts = async (req, res) => {
     const sortBy = req.query.sortBy || "createdAt";
     const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-    // Build filter object
+    // Build filter object based on query paramenters
     let filter = {};
 
     // Search filter (name or description)
@@ -69,10 +69,10 @@ export const getAllProducts = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error("Error in getAllProducts:", error);
+    console.error("Error fetching products:", error);
     res.status(500).json({
       success: false,
-      message: "Server error"
+      message: "Server error fetching products"
     });
   }
 };
