@@ -1,106 +1,95 @@
 import { FEATURES } from '../config/features.js';
 
-/** Determine if a Google user needs additional email verification
-@param {Object} user - User object
-@param {Object} context - Additional context (order info, etc.)
-@returns {boolean} - True if verification is required **/
-
 export const shouldVerifyGoogleUser = (user, context = {}) => {
-  // Feature flag check - if disabled, never verify
+  // Kiểm tra feature flag - nếu tắt thì không bao giờ xác minh
   if (!FEATURES.googleEmailVerification) {
     return false;
   }
 
-  // List of verification rules
+  // Danh sách các quy tắc xác minh
   const verificationRules = [
-    // Rule 1: First-time users (new accounts)
+    // Quy tắc 1: Người dùng lần đầu (tài khoản mới)
     () => isNewUser(user),
-    
-    // Rule 2: High-value order context
+
+    // Quy tắc 2: Đơn hàng giá trị cao
     () => context.orderValue > FEATURES.verificationThreshold,
-    
-    // Rule 3: Corporate email domains (optional)
+
+    // Quy tắc 3: Email doanh nghiệp (tùy chọn)
     () => isCorporateEmail(user.email),
-    
-    // Rule 4: Production environment (demo purposes)
+
+    // Quy tắc 4: Môi trường production (mục đích demo)
     () => FEATURES.isProduction,
-    
-    // Rule 5: Suspicious activity (can be extended)
+
+    // Quy tắc 5: Hoạt động đáng nghi (có thể mở rộng)
     () => hasSuspiciousActivity(user, context)
   ];
 
-  // Apply rules - if ANY rule returns true, verification is required
+  // Áp dụng quy tắc - nếu BẤT KỲ quy tắc nào trả về true, yêu cầu xác minh
   return verificationRules.some(rule => {
     try {
       return rule();
     } catch (error) {
       console.error('Verification rule error:', error);
-      return false; // Default to no verification if rule fails
+      return false; // Mặc định không xác minh nếu quy tắc bị lỗi
     }
   });
 };
 
-// Check if user is new or not
+//! Kiểm tra người dùng có mới hay không
 const isNewUser = (user) => {
-  // If user doesn't have lastLogin or it's their first login
+  // Nếu người dùng không có lastLogin hoặc đây là lần đăng nhập đầu tiên
   return !user.lastLogin || isFirstLogin(user);
 };
 
-// Check if this is user's first login
+//! Kiểm tra đây có phải lần đăng nhập đầu tiên của người dùng
 const isFirstLogin = (user) => {
-  // Simple check: if createdAt and lastLogin are very close (within 1 minute)
+  // Kiểm tra đơn giản: nếu createdAt và lastLogin rất gần nhau (trong vòng 1 phút)
   if (!user.createdAt || !user.lastLogin) return true;
-  
+
   const timeDiff = Math.abs(user.lastLogin - user.createdAt);
-  return timeDiff < 60000; // Less than 1 minute difference
+  return timeDiff < 60000; // Chênh lệch ít hơn 1 phút
 };
 
-/**
- * Check if email domain is corporate
- */
+//! Kiểm tra domain email có phải là doanh nghiệp
 const isCorporateEmail = (email) => {
   const corporateDomains = [
     'company.com',
     'enterprise.vn',
-    // Add more corporate domains as needed
+    // Thêm các domain doanh nghiệp khác khi cần
   ];
-  
+
   const domain = email.split('@')[1];
   return corporateDomains.includes(domain);
 };
 
-/**
- * Check for suspicious activity (can be extended)
- */
+//! Kiểm tra hoạt động đáng nghi (có thể mở rộng)
 const hasSuspiciousActivity = (user, context) => {
-  // Example rules (extend as needed):
-  
-  // Multiple rapid login attempts
+  // Các quy tắc ví dụ (mở rộng khi cần):
+
+  // Nhiều lần thử đăng nhập nhanh chóng
   if (context.rapidLoginAttempts > 3) {
     return true;
   }
-  
-  // Login from different location (if implemented)
+
+  // Đăng nhập từ vị trí khác (nếu được triển khai)
   if (context.locationMismatch) {
     return true;
   }
-  
-  // Default: no suspicious activity
+
+  // Mặc định: không có hoạt động đáng nghi
   return false;
 };
 
-/**
- * Get verification reason for logging/debugging
- */
+//! Lấy lý do xác minh để ghi log/debug
 export const getVerificationReason = (user, context = {}) => {
   if (!FEATURES.googleEmailVerification) return 'Feature disabled';
-  
+
   if (isNewUser(user)) return 'New user account';
   if (context.orderValue > FEATURES.verificationThreshold) return 'High-value order';
   if (isCorporateEmail(user.email)) return 'Corporate email domain';
   if (FEATURES.isProduction) return 'Production environment';
   if (hasSuspiciousActivity(user, context)) return 'Suspicious activity detected';
-  
+
   return 'No verification required';
 };
 

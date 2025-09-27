@@ -1,16 +1,12 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const userSchema = new mongoose.Schema({
+const userSchema = new Schema({
     userName: {
         type: String,
         required: true,
     },
     phoneNumber: {
         type: String,
-        required: function() {
-            // Only required for local registration, not for Google OAuth
-            return this.provider === 'local' || !this.provider;
-        },
         default: '',
     },
     email: {
@@ -20,10 +16,6 @@ const userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: function() {
-            // Only required for local registration, not for Google OAuth
-            return this.provider === 'local' || !this.provider;
-        },
         default: '',
     },
     lastLogin: {
@@ -47,7 +39,7 @@ const userSchema = new mongoose.Schema({
     googleId: {
         type: String,
         unique: true,
-        sparse: true // Allows null values but ensures uniqueness when present
+        sparse: true // Cho phép giá trị null nhưng đảm bảo tính duy nhất khi có giá trị
     },
     avatar: {
         type: String,
@@ -58,23 +50,19 @@ const userSchema = new mongoose.Schema({
         enum: ['local', 'google'],
         default: 'local'
     },
-    
-    // Store/Location Management Fields
+
+    // Các trường quản lý cửa hàng/vị trí
     assignedStoreId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Store',
-        required: function() {
-            // Required for staff and storeManager
-            return ['staff', 'storeManager'].includes(this.role);
-        },
         default: null
     },
-    
+
     managedStores: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Store'
-    }], // For admins who can manage multiple stores
-    
+    }], // Dành cho admin có thể quản lý nhiều cửa hàng
+
     permissions: {
         canManageProducts: { type: Boolean, default: false },
         canManageOrders: { type: Boolean, default: false },
@@ -82,21 +70,22 @@ const userSchema = new mongoose.Schema({
         canViewReports: { type: Boolean, default: false },
         canManageStores: { type: Boolean, default: false }
     },
-    // Reset Password Token
+
+    // Token đặt lại mật khẩu
     resetPasswordToken: String,
     resetPasswordExpiresAt: Date,
 
-    // Email Link Verfication
+    // Xác thực bằng link email
     verificationToken: String,
     verificationTokenExpiresAt: Date,
 
-    // OTP Verification  
+    // Xác thực bằng OTP
     verificationCode: String,
     verificationCodeExpiresAt: Date
 }, {
     timestamps: true
-})
+});
 
 const User = mongoose.model('User', userSchema);
 
-export default User; 
+export default User;

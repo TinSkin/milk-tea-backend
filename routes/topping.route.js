@@ -10,7 +10,7 @@ import { checkAdminRole } from "../middlewares/checkRole.js";
 
 const router = express.Router();
 
-//! Get all toppings with sorting & pagination route
+//! Public routes (no authentication required)
 router.get('/', getAllToppings);
 
 //! Admin only routes

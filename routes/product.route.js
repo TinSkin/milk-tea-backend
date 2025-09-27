@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getAllProducts,
+  getProductById,
   createProduct,
   updateProduct,
   softDeleteProduct,
@@ -11,9 +12,10 @@ import { checkAdminRole } from "../middlewares/checkRole.js";
 
 const router = express.Router();
 
-//! Public routes 
+//! Public routes (no authentication required)
 router.get("/", getAllProducts);
-router.get("/form-data", getProductFormData); 
+router.get("/form-data", getProductFormData);
+router.get("/:id", getProductById);
 
 //! Admin only routes
 router.post("/", verifyToken, checkAdminRole, createProduct);
