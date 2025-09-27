@@ -1,6 +1,6 @@
-import mongoose, { mongo } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const sizeOptionSchema = new mongoose.Schema({
+const sizeOptionSchema = new Schema({
     size: {
         type: String,
         required: true,
@@ -13,7 +13,7 @@ const sizeOptionSchema = new mongoose.Schema({
     }
 }, { _id: false });
 
-const productSchema = new mongoose.Schema({
+const productSchema = new Schema({
     name: {
         type: String,
         required: true,
@@ -27,7 +27,7 @@ const productSchema = new mongoose.Schema({
         maxLength: [500, 'Mô tả không được quá 500 ký tự']
     },
     category: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Category',
         required: true,
     },
@@ -50,7 +50,7 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     toppings: [{
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: "Topping"
     }],
 
@@ -76,7 +76,7 @@ const productSchema = new mongoose.Schema({
     }, // %
 
     updatedBy: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Admin' // Giả sử bạn có schema Admin/User
     }
 

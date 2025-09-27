@@ -2,25 +2,25 @@ import Product from "../models/Product.model.js";
 import Category from "../models/Category.model.js";
 import Topping from "../models/Topping.model.js";
 
-//! Get all products with pagination
+//! Lấy tất cả sản phẩm kèm phân trang
 export const getAllProducts = async (req, res) => {
   try {
-    // Extract pagination parameters
+    // Lấy tham số phân trang
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Extract filter parameters
+    // Lấy tham số lọc và sắp xếp
     const search = req.query.search || "";
     const status = req.query.status || "all";
     const category = req.query.category || "all";
     const sortBy = req.query.sortBy || "createdAt";
     const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-    // Build filter object based on query paramenters
+    // Tạo đối tượng filter dựa trên query parameters
     let filter = {};
 
-    // Search filter (name or description)
+    // Lọc theo tìm kiếm (tên hoặc mô tả)
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -28,21 +28,21 @@ export const getAllProducts = async (req, res) => {
       ];
     }
 
-    // Status filter
+    // Lọc theo trạng thái
     if (status !== "all") {
       filter.status = status;
     }
 
-    // Category filter
+    // Lọc theo danh mục
     if (category !== "all") {
       filter.category = category;
     }
 
-    // Build sort object
+    // Tạo đối tượng sắp xếp
     const sort = {};
     sort[sortBy] = sortOrder;
 
-    // Get total count and products with populated fields
+    // Lấy tổng số và danh sách sản phẩm (kèm populate)
     const totalProducts = await Product.countDocuments(filter);
     const products = await Product.find(filter)
       .populate('category', 'name')
@@ -51,7 +51,7 @@ export const getAllProducts = async (req, res) => {
       .skip(skip)
       .limit(limit);
 
-    // Calculate pagination info
+    // Tính toán thông tin phân trang
     const totalPages = Math.ceil(totalProducts / limit);
     const hasNextPage = page < totalPages;
     const hasPrevPage = page > 1;
@@ -72,12 +72,13 @@ export const getAllProducts = async (req, res) => {
     console.error("Error fetching products:", error);
     res.status(500).json({
       success: false,
-      message: "Server error fetching products"
+      message: "Internal server error fetching products",
+      error: error.message
     });
   }
 };
 
-//! Create product
+//! Tạo sản phẩm
 export const createProduct = async (req, res) => {
   try {
     const {
@@ -94,7 +95,7 @@ export const createProduct = async (req, res) => {
       discount
     } = req.body;
 
-    // Validate required fields
+    // Kiểm tra các trường bắt buộc
     if (!name || !description || !category || !price) {
       return res.status(400).json({
         success: false,
@@ -102,7 +103,7 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    // Validate category exists
+    // Kiểm tra danh mục tồn tại
     const categoryExists = await Category.findById(category);
     if (!categoryExists) {
       return res.status(400).json({
@@ -111,7 +112,7 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    // Validate toppings exist (if provided)
+    // Kiểm tra topping tồn tại (nếu có)
     if (toppings && toppings.length > 0) {
       const toppingsExist = await Topping.find({ _id: { $in: toppings } });
       if (toppingsExist.length !== toppings.length) {
@@ -122,7 +123,7 @@ export const createProduct = async (req, res) => {
       }
     }
 
-    // Check if product already exists and is available
+    // Kiểm tra sản phẩm cùng tên và đang khả dụng đã tồn tại hay chưa
     const existingAvailableProduct = await Product.findOne({
       name: name.trim(),
       status: 'available'
@@ -135,7 +136,7 @@ export const createProduct = async (req, res) => {
       });
     }
 
-    // Create new product
+    // Tạo sản phẩm mới
     const product = new Product({
       name: name.trim(),
       description: description.trim(),
@@ -148,12 +149,12 @@ export const createProduct = async (req, res) => {
       metaTitle: metaTitle?.trim() || "",
       metaDescription: metaDescription?.trim() || "",
       discount: discount || 0,
-      updatedBy: req.userId // From auth middleware
+      updatedBy: req.userId // Lấy từ middleware xác thực
     });
 
     await product.save();
 
-    // Populate for response
+    // Populate dữ liệu để trả về
     const populatedProduct = await Product.findById(product._id)
       .populate('category', 'name')
       .populate('toppings', 'name extraPrice');
@@ -172,7 +173,7 @@ export const createProduct = async (req, res) => {
   }
 };
 
-//! Update product
+//! Cập nhật sản phẩm
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -199,7 +200,7 @@ export const updateProduct = async (req, res) => {
       });
     }
 
-    // Check if name already exists (exclude current product)
+    // Kiểm tra tên đã tồn tại (loại trừ chính sản phẩm hiện tại)
     if (name && name.trim() !== product.name) {
       const existingProduct = await Product.findOne({
         name: name.trim(),
@@ -215,7 +216,7 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    // Validate category exists (if provided)
+    // Kiểm tra danh mục tồn tại (nếu có truyền vào)
     if (category && category !== product.category.toString()) {
       const categoryExists = await Category.findById(category);
       if (!categoryExists) {
@@ -226,7 +227,7 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    // Validate toppings exist (if provided)
+    // Kiểm tra topping tồn tại (nếu có)
     if (toppings && toppings.length > 0) {
       const toppingsExist = await Topping.find({ _id: { $in: toppings } });
       if (toppingsExist.length !== toppings.length) {
@@ -237,7 +238,7 @@ export const updateProduct = async (req, res) => {
       }
     }
 
-    // Update fields
+    // Cập nhật các trường
     if (name !== undefined) product.name = name.trim();
     if (description !== undefined) product.description = description.trim();
     if (category !== undefined) product.category = category;
@@ -254,7 +255,7 @@ export const updateProduct = async (req, res) => {
 
     await product.save();
 
-    // Populate for response
+    // Populate dữ liệu để trả về
     const populatedProduct = await Product.findById(product._id)
       .populate('category', 'name')
       .populate('toppings', 'name extraPrice');
@@ -273,7 +274,7 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-//! Soft delete product 
+//! Xóa mềm sản phẩm
 export const softDeleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
@@ -287,12 +288,12 @@ export const softDeleteProduct = async (req, res) => {
       });
     }
 
-    // Toggle status
+    // Chuyển đổi trạng thái
     product.status = product.status === 'available' ? 'unavailable' : 'available';
     product.updatedBy = req.userId;
     await product.save();
 
-    // Populate for response
+    // Populate dữ liệu để trả về
     const populatedProduct = await Product.findById(product._id)
       .populate('category', 'name')
       .populate('toppings', 'name extraPrice');
@@ -311,7 +312,7 @@ export const softDeleteProduct = async (req, res) => {
   }
 };
 
-//! Get categories and toppings for form dropdowns
+//! Lấy danh mục và topping cho dropdown của form
 export const getProductFormData = async (req, res) => {
   try {
     const [categories, toppings] = await Promise.all([
@@ -335,31 +336,34 @@ export const getProductFormData = async (req, res) => {
   }
 };
 
-// //! Get single product by ID
-// export const getProductById = async (req, res) => {
-//   try {
-//     const { id } = req.params;
+//! Lấy chi tiết một sản phẩm theo ID
+export const getProductById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
-//     const product = await Product.findById(id).populate('category');
+    const product = await Product.findById(id)
+      .populate('category', 'name')
+      .populate('toppings', 'name extraPrice');
 
-//     if (!product) {
-//       return res.status(404).json({
-//         success: false,
-//         message: "Product not found"
-//       });
-//     }
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found"
+      });
+    }
 
-//     res.status(200).json({
-//       success: true,
-//       data: product
-//     });
+    res.status(200).json({
+      success: true,
+      message: "Product retrieved successfully",
+      data: product
+    });
 
-//   } catch (error) {
-//     console.error("Error in getProductById:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Server error"
-//     });
-//   }
-// };
-
+  } catch (error) {
+    console.error("Error in getProductById:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};

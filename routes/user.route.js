@@ -14,13 +14,13 @@ const router = express.Router();
 //! All routes require authentication
 router.use(verifyToken);
 
-//! User profile routes
+//! User profile routes (commented out)
 // router.get("/profile", getUserProfile);
 // router.put("/profile", updateUserProfile);
 
 //! Admin only routes
-router.get("/", checkAdminRole, getAllUsers); // GET /api/users
-router.post("/:userId/soft-delete", checkAdminRole, softDeleteUser); // POST /api/users/:userId/soft-delete
-router.patch("/:userId/role", checkAdminRole, updateUserRole); // PATCH /api/users/:userId/role
+router.get("/", checkAdminRole, getAllUsers);
+router.post("/:userId/soft-delete", checkAdminRole, softDeleteUser);
+router.patch("/:userId/role", checkAdminRole, updateUserRole);
 
 export default router;

@@ -13,12 +13,12 @@ const clearUsers = async () => {
 
         // Clear Users collection
         const result = await User.deleteMany({});
-        console.log(`✅ Đã xóa ${result.deletedCount} Users`);
+        console.log(`Đã xóa ${result.deletedCount} Users`);
 
-        console.log('🎉 Hoàn thành xóa Users!');
+        console.log('Hoàn thành xóa Users!');
         
     } catch (error) {
-        console.error('❌ Lỗi khi xóa Users:', error);
+        console.error('Lỗi khi xóa Users:', error);
     } finally {
         await mongoose.disconnect();
         console.log('Đã ngắt kết nối MongoDB');

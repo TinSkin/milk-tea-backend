@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const toppingSchema = new mongoose.Schema({
+const toppingSchema = new Schema({
     name: {
         type: String,
         required: [true, 'Tên topping là bắt buộc'],

@@ -2,25 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser';
-import path from 'path';
-import fs from 'fs';
 
-// Connect Database
+// Kết nối cơ sở dữ liệu
 import { connectDB } from './db/connectDB.js'
 
-// Import routes
+// Import các route
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import toppingRoutes from "./routes/topping.route.js";
 import userRoutes from "./routes/user.route.js";
+import storeRoutes from "./routes/store.route.js";
+import cartRoutes from "./routes/cart.route.js";
 
 dotenv.config()
 
 const app = express();
-const PORT = process.env.PORT || 5000; // PORT from .env or fallback to default PORT 5000
+const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PORT mặc định 5000
 
-//! CORS 
+//! Cấu hình CORS 
 app.use(cors({
     origin: "http://localhost:5173",
     credentials: true,
@@ -36,19 +36,21 @@ app.use(cors({
 }));
 
 app.use(express.json());
-app.use(cookieParser()); // allows us to parse incoming cookies
+app.use(cookieParser()); // cho phép chúng ta parse incoming cookies
 
-//! All routes
+//! Tất cả các route
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/toppings", toppingRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/stores", storeRoutes);
+app.use("/api/cart", cartRoutes)
 
 app.listen(PORT, () => {
-    //! Connect to MongoDB function
+    //! Hàm kết nối MongoDB
     connectDB();
 
-    //! Console log to check server's running and run on which PORT 
+    //! Console log để kiểm tra server đang chạy và chạy trên PORT nào 
     console.log(`Server is running on port: ${PORT}`);
 })

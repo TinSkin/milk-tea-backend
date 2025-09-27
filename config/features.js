@@ -3,23 +3,23 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export const FEATURES = {
-  // Feature flag to enable/disable Google email verification
+  // Feature flag để bật/tắt xác minh email Google
   googleEmailVerification: process.env.GOOGLE_EMAIL_VERIFICATION === 'true',
   
-  // Order value threshold for requiring to enable/disable email verification (in VND)
+  // Ngưỡng giá trị đơn hàng để yêu cầu bật/tắt xác minh email (tính bằng VND)
   verificationThreshold: parseInt(process.env.VERIFICATION_ORDER_THRESHOLD) || 0,
   
-  // Environment checks
+  // Kiểm tra môi trường
   isDevelopment: process.env.NODE_ENV === 'development',
   isProduction: process.env.NODE_ENV === 'production',
 };
 
-// Debugging current feature configuration
+// Debug cấu hình feature hiện tại
 if (FEATURES.isDevelopment) {
-  console.log('🎛️  Feature Configuration:');
-  console.log('- Google Email Verification:', FEATURES.googleEmailVerification);
-  console.log('- Verification Threshold:', FEATURES.verificationThreshold, 'VND');
-  console.log('- Environment:', process.env.NODE_ENV);
+  console.log('Cấu hình Feature:');
+  console.log('- Xác minh Email Google:', FEATURES.googleEmailVerification);
+  console.log('- Ngưỡng xác minh:', FEATURES.verificationThreshold, 'VND');
+  console.log('- Môi trường:', process.env.NODE_ENV);
 }
 
 export default FEATURES;

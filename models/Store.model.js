@@ -1,6 +1,6 @@
-import mongoose from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
-const storeSchema = new mongoose.Schema({
+const storeSchema = new Schema({
     storeName: {
         type: String,
         required: true,
@@ -10,13 +10,13 @@ const storeSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        uppercase: true // VD: "HN01", "HCM02"
+        uppercase: true 
     },
     address: {
-        street: { type: String, required: true },
-        district: { type: String, required: true },
-        city: { type: String, required: true },
-        zipCode: { type: String }
+        street: { type: String, required: true },   // Địa chỉ đường phố
+        district: { type: String, required: true }, // Quận
+        city: { type: String, required: true },     // Thành phố
+        zipCode: { type: String }                   // Mã bưu điện
     },
     phone: {
         type: String,
@@ -27,58 +27,61 @@ const storeSchema = new mongoose.Schema({
         required: true
     },
     
-    // Store Management
+    // Quản lý nhân sự cửa hàng
     manager: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User', // Reference to User with role 'storeManager'
+        type: Schema.Types.ObjectId,
+        ref: 'User', 
         required: true
     },
     
     staff: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' // References to Users with role 'staff'
+        type: Schema.Types.ObjectId,
+        ref: 'User'
     }],
     
-    // Store Products
+    // Menu và sản phẩm có sẵn tại cửa hàng
     products: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Product' // References to Products available at this store
+        type: Schema.Types.ObjectId,
+        ref: 'Product' // Danh sách sản phẩm có sẵn tại cửa hàng này
     }],
     
-    // Store Status
+    // Danh mục sản phẩm có sẵn tại cửa hàng - dành cho sidebar filtering
+    categories: [{
+        type: Schema.Types.ObjectId,
+        ref: 'Category' // Categories available at this store for menu filtering
+    }],
+    
+    // Trạng thái hoạt động của cửa hàng
     status: {
         type: String,
-        enum: ['active', 'inactive', 'under_construction', 'closed'],
+        enum: ['active', 'inactive', 'closed'],
         default: 'active'
     },
     
-    // Operating Hours
+    // Giờ hoạt động của cửa hàng
     operatingHours: {
-        monday: { open: String, close: String },
-        tuesday: { open: String, close: String },
-        wednesday: { open: String, close: String },
-        thursday: { open: String, close: String },
-        friday: { open: String, close: String },
-        saturday: { open: String, close: String },
-        sunday: { open: String, close: String }
+        monday: { open: String, close: String },      // Thứ 2
+        tuesday: { open: String, close: String },     // Thứ 3
+        wednesday: { open: String, close: String },   // Thứ 4
+        thursday: { open: String, close: String },    // Thứ 5
+        friday: { open: String, close: String },      // Thứ 6
+        saturday: { open: String, close: String },    // Thứ 7
+        sunday: { open: String, close: String }       // Chủ nhật
     },
     
-    // Business Metrics
+    // Thông số kinh doanh
     capacity: {
         type: Number,
-        default: 50 // Number of customers store can serve
+        default: 50 // Số lượng khách hàng có thể phục vụ
     },
     
     monthlyTarget: {
         type: Number,
-        default: 0 // Monthly sales target
+        default: 0 // Mục tiêu doanh số hàng tháng
     }
 }, {
     timestamps: true
 });
-
-// Indexes for better performance - storeCode already has unique index above
-// storeSchema.index({ storeCode: 1 }); // Remove duplicate index
 
 const Store = mongoose.model('Store', storeSchema);
 

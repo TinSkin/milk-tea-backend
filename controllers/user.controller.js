@@ -1,14 +1,14 @@
 import User from "../models/User.model.js";
 
-//! Get all users (Admin only)
+//! Lấy tất cả người dùng (Chỉ Admin)
 export const getAllUsers = async (req, res) => {
     try {
-        // Extract pagination parameters from query
+        // Lấy tham số phân trang từ query
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Extract filter parameters
+        // Lấy tham số lọc
         const search = req.query.search || "";
         const status = req.query.status || "all";
         const role = req.query.role || "all";
@@ -16,10 +16,10 @@ export const getAllUsers = async (req, res) => {
         const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
         const isVerified = req.query.isVerified || "all";
 
-        // Filter object
+        // Đối tượng filter
         let filter = {};
 
-        // Search filter (name or email)
+        // Lọc tìm kiếm (theo tên hoặc email)
         if (search) {
             filter.$or = [
                 { userName: { $regex: search, $options: "i" } },
@@ -27,36 +27,36 @@ export const getAllUsers = async (req, res) => {
             ];
         }
 
-        // Status filter
+        // Lọc theo trạng thái
         if (status !== "all") {
             filter.status = status;
         }
 
-        // Role filter
+        // Lọc theo vai trò
         if (role !== "all") {
             filter.role = role;
         }
 
-        // Verified filter
+        // Lọc theo trạng thái xác thực
         if (isVerified !== "all") {
             filter.isVerified = isVerified;
         }
 
-        // Get total count for pagination
+        // Lấy tổng số người dùng để phân trang
         const totalUsers = await User.countDocuments(filter);
 
-        // Build sort object
+        // Tạo đối tượng sắp xếp
         const sort = {};
         sort[sortBy] = sortOrder;
 
-        // Get paginated users
+        // Lấy danh sách người dùng có phân trang
         const users = await User.find(filter)
             .select('-password')
             .sort(sort)
             .skip(skip)
             .limit(limit);
 
-        // Calculate pagination info
+        // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalUsers / limit);
         const hasNextPage = page < totalPages;
         const hasPrevPage = page > 1;
@@ -92,12 +92,12 @@ export const getAllUsers = async (req, res) => {
         console.error("Error in getAllUsers:", error);
         res.status(500).json({
             success: false,
-            message: "Server error"
+            message: "Lỗi server"
         });
     }
 };
 
-//! Get user profile
+//! Lấy thông tin hồ sơ người dùng
 export const getUserProfile = async (req, res) => {
     try {
         const user = await User.findById(req.userId).select('-password');
@@ -105,7 +105,7 @@ export const getUserProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "Không tìm thấy người dùng"
             });
         }
 
@@ -117,12 +117,12 @@ export const getUserProfile = async (req, res) => {
         console.error("Error in getUserProfile:", error);
         res.status(500).json({
             success: false,
-            message: "Server error"
+            message: "Lỗi server"
         });
     }
 };
 
-//! Update user profile
+//! Cập nhật hồ sơ người dùng
 export const updateUserProfile = async (req, res) => {
     try {
         const { userName, phoneNumber } = req.body;
@@ -133,11 +133,11 @@ export const updateUserProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "Không tìm thấy người dùng"
             });
         }
 
-        // Update user fields
+        // Cập nhật các trường của người dùng
         if (userName) user.userName = userName;
         if (phoneNumber) user.phoneNumber = phoneNumber;
 
@@ -145,7 +145,7 @@ export const updateUserProfile = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Profile updated successfully",
+            message: "Cập nhật hồ sơ thành công",
             user: {
                 ...user._doc,
                 password: undefined
@@ -155,12 +155,12 @@ export const updateUserProfile = async (req, res) => {
         console.error("Error in updateUserProfile:", error);
         res.status(500).json({
             success: false,
-            message: "Server error"
+            message: "Lỗi server"
         });
     }
 };
 
-//! Update user role (Admin only)
+//! Cập nhật vai trò người dùng (Chỉ Admin)
 export const updateUserRole = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -169,15 +169,15 @@ export const updateUserRole = async (req, res) => {
         if (!['user', 'admin', 'manager'].includes(role)) {
             return res.status(400).json({
                 success: false,
-                message: "Invalid role"
+                message: "Vai trò không hợp lệ"
             });
         }
 
-        // Don't allow admin to change their own role
+        // Không cho phép admin thay đổi vai trò của chính mình
         if (userId === req.userId) {
             return res.status(400).json({
                 success: false,
-                message: "Cannot change your own role"
+                message: "Không thể thay đổi vai trò của chính bạn"
             });
         }
 
@@ -190,34 +190,34 @@ export const updateUserRole = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "Không tìm thấy người dùng"
             });
         }
 
         res.status(200).json({
             success: true,
-            message: "User role updated successfully",
+            message: "Cập nhật vai trò thành công",
             user
         });
     } catch (error) {
         console.error("Error in updateUserRole:", error);
         res.status(500).json({
             success: false,
-            message: "Server error"
+            message: "Lỗi server"
         });
     }
 };
 
-//! Soft delete user (Admin only)
+//! Xóa mềm người dùng (Chỉ Admin)
 export const softDeleteUser = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // Don't allow admin to soft delete themselves
+        // Không cho phép admin tự xóa mềm chính mình
         if (userId === req.userId) {
             return res.status(400).json({
                 success: false,
-                message: "Cannot deactivate your own account"
+                message: "Không thể vô hiệu hóa tài khoản của chính bạn"
             });
         }
 
@@ -226,11 +226,11 @@ export const softDeleteUser = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: "User not found"
+                message: "Không tìm thấy người dùng"
             });
         }
 
-        // Toggle status between active and inactive
+        // Chuyển đổi trạng thái giữa hoạt động và không hoạt động
         const newStatus = user.status === 'active' ? 'inactive' : 'active';
 
         user.status = newStatus;
@@ -238,7 +238,7 @@ export const softDeleteUser = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: `User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully`,
+            message: `Người dùng đã được ${newStatus === 'active' ? 'kích hoạt' : 'vô hiệu hóa'} thành công`,
             user: {
                 ...user._doc,
                 password: undefined
@@ -248,7 +248,7 @@ export const softDeleteUser = async (req, res) => {
         console.error("Error in softDeleteUser:", error);
         res.status(500).json({
             success: false,
-            message: "Server error"
+            message: "Lỗi server"
         });
     }
 };

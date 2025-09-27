@@ -1,44 +1,44 @@
 import Topping from '../models/Topping.model.js';
 
-//! Get all toppings (Admin only)
+//! Lấy tất cả topping (Chỉ Admin)
 export const getAllToppings = async (req, res) => {
     try {
-        // Extract pagination parameters
+        // Lấy tham số phân trang
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Extract filter parameters
+        // Lấy tham số lọc
         const search = req.query.search || "";
         const status = req.query.status || "all";
         const sortBy = req.query.sortBy || "createdAt";
         const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-        // Build filter object
+        // Tạo đối tượng filter
         let filter = {};
 
-        // Search filter (name)
+        // Lọc tìm kiếm (theo tên)
         if (search) {
             filter.name = { $regex: search, $options: "i" };
         }
 
-        // Status filter
+        // Lọc theo trạng thái
         if (status !== "all") {
             filter.status = status;
         }
 
-        // Build sort object
+        // Tạo đối tượng sắp xếp
         const sort = {};
         sort[sortBy] = sortOrder;
 
-        // Get total count and toppings
+        // Lấy tổng số và danh sách topping
         const totalToppings = await Topping.countDocuments(filter);
         const toppings = await Topping.find(filter)
             .sort(sort)
             .skip(skip)
             .limit(limit);
 
-        // Calculate pagination info
+        // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalToppings / limit);
         const hasNextPage = page < totalPages;
         const hasPrevPage = page > 1;
@@ -64,12 +64,12 @@ export const getAllToppings = async (req, res) => {
     }
 };
 
-//! Create topping
+//! Tạo mới topping
 export const createTopping = async (req, res) => {
     try {
         const { name, extraPrice, description, status } = req.body;
 
-        // Validate required fields
+        // Kiểm tra dữ liệu bắt buộc
         if (!name || extraPrice === undefined) {
             return res.status(400).json({
                 success: false,
@@ -77,7 +77,7 @@ export const createTopping = async (req, res) => {
             });
         }
 
-        // Check if topping already exists and is available
+        // Kiểm tra topping đã tồn tại và đang khả dụng
         const existingTopping = await Topping.findOne({
             name: name.trim(),
             status: 'available'
@@ -90,7 +90,7 @@ export const createTopping = async (req, res) => {
             });
         }
 
-        // Create new topping
+        // Tạo topping mới
         const topping = new Topping({
             name: name.trim(),
             extraPrice: parseFloat(extraPrice),
@@ -116,7 +116,7 @@ export const createTopping = async (req, res) => {
     }
 };
 
-//! Update topping
+//! Cập nhật topping
 export const updateTopping = async (req, res) => {
     try {
         const { id } = req.params;
@@ -131,7 +131,7 @@ export const updateTopping = async (req, res) => {
             });
         }
 
-        // Check if name already exists (exclude current topping)
+        // Kiểm tra tên đã tồn tại (loại trừ topping hiện tại)
         if (name && name.trim() !== topping.name) {
             const existingTopping = await Topping.findOne({
                 name: name.trim(),
@@ -147,7 +147,7 @@ export const updateTopping = async (req, res) => {
             }
         }
 
-        // Update fields
+        // Cập nhật các trường
         if (name) topping.name = name.trim();
         if (extraPrice !== undefined) topping.extraPrice = parseFloat(extraPrice);
         if (description !== undefined) topping.description = description.trim();
@@ -169,7 +169,7 @@ export const updateTopping = async (req, res) => {
     }
 };
 
-//! Soft delete topping (toggle status)
+//! Xóa mềm topping (chuyển trạng thái)
 export const softDeleteTopping = async (req, res) => {
     try {
         const { id } = req.params;
@@ -183,7 +183,7 @@ export const softDeleteTopping = async (req, res) => {
             });
         }
 
-        // Toggle status
+        // Chuyển đổi trạng thái
         topping.status = topping.status === 'available' ? 'unavailable' : 'available';
         await topping.save();
 
@@ -200,4 +200,3 @@ export const softDeleteTopping = async (req, res) => {
         });
     }
 };
-

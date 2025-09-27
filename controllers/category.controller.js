@@ -1,45 +1,45 @@
 import Category from '../models/Category.model.js';
 import Product from '../models/Product.model.js';
 
-//! Get all categories (Admin only)
+//! Lấy tất cả danh mục (Chỉ Admin)
 export const getAllCategories = async (req, res) => {
     try {
-        // Extract pagination parameters
+        // Lấy tham số phân trang
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Extract filter parameters
+        // Lấy tham số lọc
         const search = req.query.search || "";
         const status = req.query.status || "all";
         const sortBy = req.query.sortBy || "createdAt";
         const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
 
-        // Build filter object
+        // Tạo đối tượng filter
         let filter = {};
 
-        // Search filter (name)
+        // Lọc tìm kiếm (theo tên)
         if (search) {
             filter.name = { $regex: search, $options: "i" };
         }
 
-        // Status filter
+        // Lọc theo trạng thái
         if (status !== "all") {
             filter.status = status;
         }
 
-        // Build sort object
+        // Tạo đối tượng sắp xếp
         const sort = {};
         sort[sortBy] = sortOrder;
 
-        // Get total count and categories
+        // Lấy tổng số và danh sách danh mục
         const totalCategories = await Category.countDocuments(filter);
         const categories = await Category.find(filter)
             .sort(sort)
             .skip(skip)
             .limit(limit);
 
-        // Calculate pagination info
+        // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalCategories / limit);
         const hasNextPage = page < totalPages;
         const hasPrevPage = page > 1;
@@ -65,12 +65,12 @@ export const getAllCategories = async (req, res) => {
     }
 };
 
-//! Create category
+//! Tạo mới danh mục
 export const createCategory = async (req, res) => {
     try {
         const { name, description, status } = req.body;
 
-        // Validate required fields
+        // Kiểm tra trường bắt buộc
         if (!name) {
             return res.status(400).json({
                 success: false,
@@ -78,7 +78,7 @@ export const createCategory = async (req, res) => {
             });
         }
 
-        // Check if category already exists and is available
+        // Kiểm tra danh mục đã tồn tại và đang khả dụng
         const existingCategory = await Category.findOne({
             name: name.trim(),
             status: 'available'
@@ -91,7 +91,7 @@ export const createCategory = async (req, res) => {
             });
         }
 
-        // Create new category
+        // Tạo danh mục mới
         const category = new Category({
             name: name.trim(),
             description: description?.trim() || "",
@@ -114,7 +114,7 @@ export const createCategory = async (req, res) => {
     }
 };
 
-//! Update category
+//! Cập nhật danh mục
 export const updateCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -129,7 +129,7 @@ export const updateCategory = async (req, res) => {
             });
         }
 
-        // Check if name already exists (exclude current category)
+        // Kiểm tra tên đã tồn tại (loại trừ danh mục hiện tại)
         if (name && name.trim() !== category.name) {
             const existingCategory = await Category.findOne({
                 name: name.trim(),
@@ -145,7 +145,7 @@ export const updateCategory = async (req, res) => {
             }
         }
 
-        // Update fields
+        // Cập nhật các trường
         if (name) category.name = name.trim();
         if (description !== undefined) category.description = description.trim();
         if (status) category.status = status;
@@ -166,7 +166,7 @@ export const updateCategory = async (req, res) => {
     }
 };
 
-//! Soft delete category (toggle status)
+//! Xóa mềm danh mục (chuyển trạng thái)
 export const softDeleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -180,7 +180,7 @@ export const softDeleteCategory = async (req, res) => {
             });
         }
 
-        // Toggle status
+        // Chuyển đổi trạng thái
         category.status = category.status === 'available' ? 'unavailable' : 'available';
         await category.save();
 
@@ -198,7 +198,7 @@ export const softDeleteCategory = async (req, res) => {
     }
 };
 
-//! Hard delete category (Xóa vĩnh viễn)
+//! Xóa cứng danh mục (Xóa vĩnh viễn)
 export const deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;
@@ -226,13 +226,13 @@ export const deleteCategory = async (req, res) => {
     }
 };
 
-//! Sync categories with products
+//! Đồng bộ danh mục với sản phẩm
 export const syncCategoriesWithProducts = async (req, res) => {
     try {
-        // Lấy tất cả category có status là 'unavailable'
+        // Lấy tất cả danh mục có status là 'unavailable'
         const unavailableCategories = await Category.find({ status: 'unavailable' }).select('_id');
 
-        // Nếu có category ngừng hoạt động, cập nhật tất cả sản phẩm thuộc các category đó thành 'unavailable'
+        // Nếu có danh mục ngừng hoạt động, cập nhật tất cả sản phẩm thuộc các danh mục đó thành 'unavailable'
         if (unavailableCategories.length > 0) {
             const categoryIds = unavailableCategories.map(category => category._id);
 
