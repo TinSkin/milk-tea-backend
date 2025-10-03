@@ -397,6 +397,7 @@ export const login = async (req, res) => {
             role: user.role,
             isVerified: user.isVerified,
             lastLogin: user.lastLogin,
+            assignedStoreId: user.assignedStoreId || null,
         }
 
         // Trả về thành công và dữ liệu người dùng (không bao gồm mật khẩu)
@@ -405,7 +406,7 @@ export const login = async (req, res) => {
             message: "Đăng nhập thành công",
             user: temp_user,
             isAuthenticated: true,
-            requiresEmailVerification: !user.isVerified, // redirect /verify-choice
+            requiresEmailVerification: !user.isVerified,
         });
     } catch (error) {
         console.error("Error logging in:", error);
