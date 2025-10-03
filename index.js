@@ -14,6 +14,8 @@ import toppingRoutes from "./routes/topping.route.js";
 import userRoutes from "./routes/user.route.js";
 import storeRoutes from "./routes/store.route.js";
 import cartRoutes from "./routes/cart.route.js";
+import orderRoutes from "./routes/order.route.js";
+import paymentRoutes from "./routes/payment.route.js";
 
 dotenv.config()
 
@@ -46,6 +48,8 @@ app.use("/api/toppings", toppingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/stores", storeRoutes);
 app.use("/api/cart", cartRoutes)
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes); 
 
 app.listen(PORT, () => {
     //! Hàm kết nối MongoDB
