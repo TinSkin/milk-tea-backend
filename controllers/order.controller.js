@@ -72,9 +72,9 @@
 // }
 
 import mongoose from "mongoose";
-import Order from "../models/order.model.js";
-import Product from "../models/product.model.js";
-import Payment from "../models/payment.model.js";
+import Order from "../models/Order.model.js";
+import Product from "../models/Product.model.js";
+import Payment from "../models/Payment.model.js";
 import Topping from "../models/Topping.model.js";
 
 const VALID_STATUSES = [

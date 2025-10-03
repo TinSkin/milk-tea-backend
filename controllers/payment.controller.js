@@ -1,6 +1,6 @@
-import Payment from '../models/payment.model.js';
-import Order from '../models/order.model.js';
-// import User from '../models/user.model.js';
+import Payment from '../models/Payment.model.js';
+import Order from '../models/Order.model.js';
+// import User from '../models/User.model.js';
 
 // Lấy danh sách tất cả payments
 export const getPayments = async (req, res) => {
