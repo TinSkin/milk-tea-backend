@@ -10,8 +10,7 @@ import {
   getOrderStats
 } from '../controllers/order.controller.js';
 import { verifyToken } from "../middlewares/verifyToken.js";
-// import { verifyAdmin } from '../middleware/verifyAdmin.js'; // Nếu bạn muốn dùng middleware riêng cho admin
-
+// import { verifyAdmin } from '../middleware/verifyAdmin.js'; 
 const router = express.Router();
 
 /**
@@ -20,16 +19,13 @@ const router = express.Router();
  * =========================
  */
 // Tạo đơn hàng mới (Customer)
-// router.post('/', verifyToken, createOrder);
-router.post('/', createOrder);
+router.post('/', verifyToken, createOrder);
 
 // Lấy danh sách đơn hàng của Customer
-// router.get('/my-orders', verifyToken, getCustomerOrders);
-router.post('/', createOrder);
+router.get('/my-orders', verifyToken, getCustomerOrders);
 
 // Hủy đơn hàng (Customer only)
-// router.post('/:id/cancel', verifyToken, cancelOrder);
-router.post('/:id/cancel', cancelOrder);
+router.post('/:id/cancel', verifyToken, cancelOrder);
 
 /**
  * =========================

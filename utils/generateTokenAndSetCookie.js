@@ -19,8 +19,8 @@ export const generateTokenAndSetCookie = (res, userId, rememberMe = false) => {
     // const tokenExpiryTime = rememberMe ? TOKEN_EXPIRY_DAYS * 24 * 60 * 60 : NO_REMEMBER_ME_TOKEN_EXPIRY * 60 * 60;
     // TEST MODE: Thời gian ngắn để test nhanh
     const tokenExpiryTime = rememberMe 
-        ? 4 * 60           // rememberMe = true: 4 phút
-        : 3 * 60;          // rememberMe = false: 3 phút
+        ? 10 * 60           // rememberMe = true: 4 phút
+        : 15 * 60;          // rememberMe = false: 3 phút
     // Xác định thời gian hết hạn dựa trên tùy chọn rememberMe
     const cookieMaxAge = tokenExpiryTime * 1000;
 
