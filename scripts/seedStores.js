@@ -2,7 +2,8 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Store from '../models/Store.model.js';
 import Product from '../models/Product.model.js';
-import Category from '../models/Category.model.js'; // ✅ Thêm import này!
+import Category from '../models/Category.model.js';
+import Topping from '../models/Topping.model.js'; 
 
 dotenv.config();
 
@@ -14,14 +15,17 @@ const seedStores = async () => {
         // ✅ Force register models - ensure Mongoose knows about them
         console.log('📝 Registering models...');
         console.log(`- Product model: ${Product.modelName}`);
-        console.log(`- Category model: ${Category.modelName}`); 
+        console.log(`- Category model: ${Category.modelName}`);
+        console.log(`- Topping model: ${Topping.modelName}`);
         console.log(`- Store model: ${Store.modelName}`);
 
-        // Kiểm tra dữ liệu categories và products có tồn tại không
+        // Kiểm tra dữ liệu categories, products và toppings có tồn tại không
         const productCount = await Product.countDocuments();
         const categoryCount = await Category.countDocuments();
+        const toppingCount = await Topping.countDocuments();
         console.log(`📊 Products in DB: ${productCount}`);
         console.log(`📊 Categories in DB: ${categoryCount}`);
+        console.log(`📊 Toppings in DB: ${toppingCount}`);
 
         if (productCount === 0) {
             console.log('❌ Không có products trong database! Hãy seed products trước.');
@@ -32,6 +36,16 @@ const seedStores = async () => {
             console.log('❌ Không có categories trong database! Hãy seed categories trước.');
             return;
         }
+
+        if (toppingCount === 0) {
+            console.log('❌ Không có toppings trong database! Hãy seed toppings trước.');
+            return;
+        }
+
+        // Lấy tất cả topping IDs
+        const allToppings = await Topping.find().select('_id name');
+        const toppingIds = allToppings.map(topping => topping._id);
+        console.log(`🧊 Available toppings: ${allToppings.map(t => t.name).join(', ')}`);
 
         console.log('✅ Dữ liệu sẵn sàng, bắt đầu seed stores...');
 
@@ -65,6 +79,25 @@ const seedStores = async () => {
         const shuffled = [...productIds].sort(() => Math.random() - 0.5);
         const perStore = Math.ceil(shuffled.length / 3);
 
+        // Helper function để tạo product objects
+        const createProductObjects = (productIds) => {
+            return productIds.map(productId => ({
+                productId: productId,
+                isActive: true,
+                stockQuantity: Math.floor(Math.random() * 100) + 20, // Random stock 20-120
+                status: 'available'
+            }));
+        };
+
+        // Helper function để tạo topping objects  
+        const createToppingObjects = (toppingIds) => {
+            return toppingIds.map(toppingId => ({
+                toppingId: toppingId,
+                isAvailable: true,
+                stockQuantity: Math.floor(Math.random() * 50) + 10 // Random stock 10-60
+            }));
+        };
+
         const stores = [
             {
                 _id: "68ce9b7d4b02c0d532670d20",
@@ -80,7 +113,10 @@ const seedStores = async () => {
                 email: 'hanoi@milktea.com',
                 manager: userIds.managerHN,
                 staff: [userIds.staffHN1, userIds.staffHN2],
-                products: shuffled.slice(0, perStore * 3),
+                products: createProductObjects(shuffled.slice(0, perStore * 3)),
+                toppings: createToppingObjects(toppingIds),
+                orders: [], // Array rỗng
+                payments: [], // Array rỗng
                 operatingHours: {
                     monday: { open: '08:00', close: '22:00' },
                     tuesday: { open: '08:00', close: '22:00' },
@@ -107,7 +143,10 @@ const seedStores = async () => {
                 email: 'hcm@milktea.com',
                 manager: userIds.managerHCM,
                 staff: [userIds.staffHCM1, userIds.staffHCM2],
-                products: shuffled.slice(perStore, perStore * 3),
+                products: createProductObjects(shuffled.slice(perStore, perStore * 3)),
+                toppings: createToppingObjects(toppingIds),
+                orders: [], // Array rỗng
+                payments: [], // Array rỗng
                 operatingHours: {
                     monday: { open: '08:00', close: '22:00' },
                     tuesday: { open: '08:00', close: '22:00' },
@@ -134,7 +173,10 @@ const seedStores = async () => {
                 email: 'danang@milktea.com',
                 manager: userIds.managerDN,
                 staff: [userIds.staffDN1, userIds.staffDN2],
-                products: shuffled.slice(perStore, perStore * 3),
+                products: createProductObjects(shuffled.slice(perStore, perStore * 3)),
+                toppings: createToppingObjects(toppingIds),
+                orders: [], // Array rỗng
+                payments: [], // Array rỗng
                 operatingHours: {
                     monday: { open: '08:00', close: '22:00' },
                     tuesday: { open: '08:00', close: '22:00' },
@@ -155,9 +197,12 @@ const seedStores = async () => {
             const existing = await Store.findOne({ storeCode: storeData.storeCode });
             
             if (!existing) {
+                // Lấy productIds từ embedded objects
+                const productIds = storeData.products.map(p => p.productId);
+                
                 // ✅ Safer approach: Get products first, then get categories separately  
                 const storeProducts = await Product.find({
-                    _id: { $in: storeData.products }
+                    _id: { $in: productIds }
                 }).select('name category');
                 
                 if (storeProducts.length === 0) {
@@ -172,6 +217,13 @@ const seedStores = async () => {
                         .map(product => product.category.toString())
                 )];
 
+                // Create category objects
+                const categoryObjects = categoryIds.map((categoryId, index) => ({
+                    categoryId: categoryId,
+                    isActive: true,
+                    displayOrder: index
+                }));
+
                 // Get category names for logging
                 const categoryNames = [];
                 if (categoryIds.length > 0) {
@@ -183,13 +235,14 @@ const seedStores = async () => {
                 
                 console.log(`\n📦 Cửa hàng: ${storeData.storeName}`);
                 console.log(`🛍️  Sản phẩm: ${storeData.products.length} sản phẩm`);
-                console.log(`📂 Danh mục: ${categoryIds.length} loại`);
+                console.log(`🧊 Topping: ${storeData.toppings.length} loại`);
+                console.log(`📂 Danh mục: ${categoryObjects.length} loại`);
                 console.log(`📋 Tên danh mục: ${categoryNames.join(', ')}`);
                 
                 // Thêm danh mục vào storeData
                 const finalStoreData = {
                     ...storeData,
-                    categories: categoryIds
+                    categories: categoryObjects
                 };
                 
                 const store = await Store.create(finalStoreData);
@@ -197,7 +250,10 @@ const seedStores = async () => {
                 console.log(`👤 Quản lý: ${store.manager}`);
                 console.log(`👥 Nhân viên: ${store.staff.length}`);
                 console.log(`🛍️  Sản phẩm: ${store.products.length}`);
+                console.log(`🧊 Topping: ${store.toppings.length}`);
                 console.log(`📂 Danh mục: ${store.categories.length}`);
+                console.log(`📄 Đơn hàng: ${store.orders.length}`);
+                console.log(`💳 Thanh toán: ${store.payments.length}`);
             } else {
                 console.log(`⚠️  Đã tồn tại: ${existing.storeName}`);
                 

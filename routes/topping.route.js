@@ -4,6 +4,7 @@ import {
     createTopping,
     updateTopping,
     softDeleteTopping,
+    deleteTopping,
 } from '../controllers/topping.controller.js';
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { checkAdminRole } from "../middlewares/checkRole.js";
@@ -17,5 +18,6 @@ router.get('/', getAllToppings);
 router.post("/", verifyToken, checkAdminRole, createTopping);
 router.put("/:id", verifyToken, checkAdminRole, updateTopping);
 router.post("/:id/soft-delete", verifyToken, checkAdminRole, softDeleteTopping);
+router.delete("/:id", verifyToken, checkAdminRole, deleteTopping);
 
 export default router;
