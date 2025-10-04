@@ -200,3 +200,34 @@ export const softDeleteTopping = async (req, res) => {
         });
     }
 };
+
+//! Xóa vĩnh viễn topping (hard delete)
+export const deleteTopping = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const topping = await Topping.findById(id);
+
+        if (!topping) {
+            return res.status(404).json({
+                success: false,
+                message: "Topping not found"
+            });
+        }
+
+        // Xóa vĩnh viễn khỏi database
+        await Topping.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: "Topping deleted permanently",
+            deletedTopping: topping
+        });
+    } catch (error) {
+        console.error("Error in deleteTopping:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
