@@ -1,75 +1,3 @@
-// import mongoose from "mongoose";
-// import Order from "../models/Order.model.js";
-// import Product from "../models/Product.js";
-// import Payment from '../models/payment.model.js';
-
-// const computeTotal = (products = []) => {
-//     return products.reduce((sum, p) => {
-//         const qty = Number(p.quantity) || 0;
-//         const price = Number(p.price) || 0;
-//         return sum + qty * price;
-//     }, 0);
-// };
-
-// //! Create new order
-// export const createOrder = async (req, res) => {
-//     const userId = req.user._id;
-
-//     // Validate userId
-//     if (!userId || !mongoose.isValidObjectId(userId)) {
-//         return res.status(400).json({ message: "Thiếu hoặc sai user id" });
-//     }
-
-//     const {
-//         products = [],
-//         address,
-//         phone,
-//         note,
-//         paymentMethod = "cash",
-//         totalPrice,
-//     } = req.body;
-
-//     // Validate product list, address, and phone
-//     if (!Array.isArray(products) || products.length === 0) {
-//         return res.status(400).json({ message: "Giỏ hàng trống" });
-//     }
-//     if (!address || !phone) {
-//         return res.status(400).json({ message: "Thiếu địa chỉ hoặc số điện thoại" });
-//     }
-
-//     // Validate each product item
-//     for (const item of products) {
-//         if (!item.product || !mongoose.isValidObjectId(item.product)) {
-//             return res.status(400).json({ message: "product id không hợp lệ" });
-//         }
-//         if (typeof item.quantity !== "number" || item.quantity <= 0) {
-//             return res.status(400).json({ message: "quantity phải > 0" });
-//         }
-//         if (typeof item.price !== "number" || item.price < 0) {
-//             return res.status(400).json({ message: "price không hợp lệ" });
-//         }
-//     }
-
-//     const order = await Order.create({
-//         user: userId,
-//         products,
-//         totalPrice,
-//         address,
-//         phone,
-//         note,
-//         paymentMethod,
-//     });
-
-//     const populated = await order.populate([
-//         { path: "user", select: "name email" },
-//         { path: "products.product", select: "name images" },
-//     ]);
-
-//     return res.status(201).json({
-//         message: "Tạo đơn thành công",
-//         data: populated
-//     });
-// }
 
 import mongoose from "mongoose";
 import Order from "../models/Order.model.js";
@@ -209,7 +137,7 @@ export const createOrder = async (req, res) => {
       customerId: userId,
       customerInfo: {
         name: req.user?.name || shippingAddress.fullName,
-        email: req.user?.email,
+        email: req.user?.email || req.body.customerInfo?.email,
       },
       items: orderItems,
       shippingAddress,
@@ -221,14 +149,15 @@ export const createOrder = async (req, res) => {
       finalAmount,
       notes,
       status: "finding_driver",
-      statusHistory: [
-        {
-          status: "finding_driver",
-          timestamp: new Date(),
-          note: "Đơn hàng được tạo",
-          updatedBy: userId,
-        },
-      ],
+      // statusHistory: [
+      //   {
+      //     status: "finding_driver",
+      //     paymentStatus: "pending",
+      //     timestamp: new Date(),
+      //     note: "Đơn hàng được tạo",
+      //     updatedBy: userId,
+      //   },
+      // ],
     });
 
     await order.save();
@@ -396,11 +325,14 @@ export const getOrderById = async (req, res) => {
     // Xử lý hình ảnh cho order detail
     const processedOrder = {
       ...order.toObject(),
-      items: order.items.map((item) => ({
-        ...item,
-        image: processImagePath(item.productId?.image || item.image),
-      })),
+      statusHistory: order.statusHistory.map(entry => ({
+        status: entry.status,
+        timestamp: entry.timestamp,
+        note: entry.note,
+        updatedBy: entry.updatedBy,
+      }))
     };
+    
 
     res.json(processedOrder);
   } catch (error) {
@@ -438,7 +370,10 @@ export const updateOrderStatus = async (req, res) => {
     }
 
     // Cập nhật trạng thái đơn hàng
-    order.status = status;
+    order.status = newStatus;
+order.updatedBy = req.userId; // để pre-save hook biết ai cập nhật
+await order.save();
+
 
     // Cập nhật trạng thái thanh toán dựa trên trạng thái đơn hàng
     if (status === "delivered") {
@@ -494,12 +429,6 @@ export const updatePaymentStatus = async (req, res) => {
     }
 
     order.paymentStatus = paymentStatus;
-    order.statusHistory.push({
-      status: `payment_${paymentStatus}`,
-      timestamp: new Date(),
-      note: note || `Payment status changed to ${paymentStatus}`,
-      updatedBy: req.userId,
-    });
 
     await order.save();
 
@@ -627,11 +556,7 @@ export const cancelOrder = async (req, res) => {
     }
 
     order.status = "cancelled";
-    order.statusHistory.push({
-      status: "cancelled",
-      timestamp: new Date(),
-      note: reason || "Cancelled by customer",
-    });
+    
 
     await order.save();
 

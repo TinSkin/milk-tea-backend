@@ -1,54 +1,4 @@
-// import mongoose, { Schema } from "mongoose";
 
-// const orderSchema = new Schema(
-//   {
-//     user: {
-//       type: Schema.Types.ObjectId,
-//       ref: "User",
-//       required: true,
-//     },
-//     products: [
-//       {
-//         product: {
-//           type: Schema.Types.ObjectId,
-//           ref: "Product",
-//           required: true,
-//         },
-//         name: String,
-//         quantity: { type: Number, required: true },
-//         price: { type: Number, required: true },
-//         size: String,
-//         toppings: [String],
-//       },
-//     ],
-//     totalPrice: {
-//       type: Number,
-//       required: true,
-//     },
-//     status: {
-//       type: String,
-//       enum: ["pending", "confirmed", "delivered", "cancelled"],
-//       default: "pending",
-//     },
-//     address: {
-//       type: String,
-//       required: true,
-//     },
-//     phone: {
-//       type: String,
-//       required: true,
-//     },
-//     note: String,
-//     paymentMethod: {
-//       type: String,
-//       enum: ["cash", "momo", "banking"],
-//       default: "cash",
-//     },
-//   },
-//   { timestamps: true }
-// );
-
-// export default mongoose.model("Order", orderSchema);
 
 import mongoose from "mongoose";
 
@@ -191,6 +141,9 @@ const orderSchema = new mongoose.Schema(
           type: String,
           required: true,
         },
+        paymentStatus: { 
+          type: String, 
+          default: null }, 
         timestamp: {
           type: Date,
           default: Date.now,
@@ -240,16 +193,30 @@ orderSchema.pre("save", function (next) {
 });
 
 // Thêm trạng thái vào lịch sử khi trạng thái thay đổi
-orderSchema.pre("save", function (next) {
-  if (this.isModified("status") && this.status) {
+orderSchema.pre("save", function(next) {
+  // Khi tạo mới
+  if (this.isNew) {
     this.statusHistory.push({
       status: this.status,
+      paymentStatus: this.paymentStatus || "pending", // thêm paymentStatus
+      timestamp: new Date(),
+      note: "Đơn hàng được tạo",
+      updatedBy: this.customerId,
+    });
+  } 
+  // Khi cập nhật status
+  else if (this.isModified("status") && this.status) {
+    this.statusHistory.push({
+      status: this.status,
+      paymentStatus: this.paymentStatus || null, // thêm paymentStatus khi update
       timestamp: new Date(),
       note: `Status changed to ${this.status}`,
+      updatedBy: this.updatedBy || null,
     });
   }
   next();
 });
+
 
 // Nếu model Order đã tồn tại trong cache thì dùng lại, nếu chưa thì tạo mới
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);

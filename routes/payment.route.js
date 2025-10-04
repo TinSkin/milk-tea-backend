@@ -8,20 +8,20 @@ import {
 
 const router = express.Router();
 
-// // Middleware kiểm tra quyền admin
-// const checkAdmin = (req, res, next) => {
-//     if (!req.user || req.user.role !== 'admin') {
-//         return res.status(403).json({
-//             success: false,
-//             message: 'Chỉ admin mới có quyền truy cập'
-//         });
-//     }
-//     next();
-// };
+// Middleware kiểm tra quyền admin
+const checkAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Chỉ admin mới có quyền truy cập'
+        });
+    }
+    next();
+};
 
-// // Tất cả route payment đều yêu cầu đăng nhập và quyền admin
-// router.use(verifyToken);
-// router.use(checkAdmin);
+// Tất cả route payment đều yêu cầu đăng nhập và quyền admin
+router.use(verifyToken);
+router.use(checkAdmin);
 
 // Lấy danh sách payments (lọc + phân trang)
 router.get('/', getPayments);
