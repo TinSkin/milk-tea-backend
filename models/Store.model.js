@@ -41,48 +41,14 @@ const storeSchema = new Schema({
     
     // Menu và sản phẩm có sẵn tại cửa hàng
     products: [{
-        productId: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-        // Store-specific data cho product
-        isActive: { type: Boolean, default: true },
-        customPrice: Number,  // Giá riêng của store (optional, override global price)
-        stockQuantity: { type: Number, default: 0 },
-        status: {
-            type: String,
-            enum: ['available', 'unavailable', 'out_of_stock'],
-            default: 'available'
-        },
-        addedAt: { type: Date, default: Date.now }
+        type: Schema.Types.ObjectId,
+        ref: 'Product' // Danh sách sản phẩm có sẵn tại cửa hàng này
     }],
     
     // Danh mục sản phẩm có sẵn tại cửa hàng - dành cho sidebar filtering
     categories: [{
-        categoryId: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
-        // Store-specific data cho category
-        isActive: { type: Boolean, default: true },
-        displayOrder: { type: Number, default: 0 },
-        addedAt: { type: Date, default: Date.now }
-    }],
-    
-    // Topping có sẵn tại cửa hàng này
-    toppings: [{
-        toppingId: { type: Schema.Types.ObjectId, ref: 'Topping', required: true },
-        // Store-specific data cho topping
-        isAvailable: { type: Boolean, default: true },
-        customPrice: Number,  // Giá riêng của store (optional, override global price)
-        stockQuantity: { type: Number, default: 0 },
-        addedAt: { type: Date, default: Date.now }
-    }],
-    
-    // Đơn hàng thuộc về cửa hàng này
-    orders: [{
         type: Schema.Types.ObjectId,
-        ref: 'Order'
-    }],
-    
-    // Lịch sử thanh toán và giao dịch
-    payments: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Payment' 
+        ref: 'Category' // Categories available at this store for menu filtering
     }],
     
     // Trạng thái hoạt động của cửa hàng

@@ -100,6 +100,10 @@ export const getStoreProducts = async (req, res) => {
             });
         }
 
+        console.log("🔍 Store found:", store.storeName);
+        console.log("🔍 Store products count:", store.products.length);
+        console.log("🔍 Store products IDs:", store.products);
+
         // Tạo điều kiện lọc cho sản phẩm
         let filter = {};
         
@@ -124,8 +128,12 @@ export const getStoreProducts = async (req, res) => {
         const sort = {};
         sort[sortBy] = sortOrder;
 
+        console.log("🔍 Filter used for products:", filter);
+
         // Đếm tổng số sản phẩm và lấy danh sách sản phẩm với phân trang
         const totalProducts = await Product.countDocuments(filter);
+        console.log("🔍 Total products found:", totalProducts);
+        
         const products = await Product.find(filter)
             .populate('category', 'name slug')
             .populate('toppings', 'name extraPrice')
@@ -133,6 +141,9 @@ export const getStoreProducts = async (req, res) => {
             .skip(skip)
             .limit(limit)
             .select('name price category images description status sizeOptions toppings createdAt');
+
+        console.log("🔍 Products returned:", products.length);
+        console.log("🔍 First product:", products[0]?.name || "No products");
 
         // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalProducts / limit);
@@ -256,6 +267,7 @@ export const getMyStore = async (req, res) => {
 export const getMyStoreProducts = async (req, res) => {
     try {
         const managerId = req.user.userId;
+        console.log("🔍 Manager ID:", managerId);
         
         // Tìm cửa hàng và populate sản phẩm
         const store = await Store.findOne({ manager: managerId })
@@ -266,6 +278,12 @@ export const getMyStoreProducts = async (req, res) => {
                     select: 'name'
                 }
             });
+            
+        console.log("🔍 Store found for manager:", store?.storeName || "No store");
+        if (store) {
+            console.log("🔍 Store products count:", store.products.length);
+            console.log("🔍 First product:", store.products[0]?.name || "No products");
+        }
             
         if (!store) {
             return res.status(404).json({
