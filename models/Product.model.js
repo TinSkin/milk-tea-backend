@@ -38,7 +38,7 @@ const productSchema = new Schema({
     sizeOptions: [sizeOptionSchema],
     status: {
         type: String,
-        enum: ['available', 'unavailable', 'out_of_stock'],
+        enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
         default: 'available',
     },
     currency: {

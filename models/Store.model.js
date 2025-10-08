@@ -10,7 +10,7 @@ const storeSchema = new Schema({
         type: String,
         required: true,
         unique: true,
-        uppercase: true 
+        uppercase: true
     },
     address: {
         street: { type: String, required: true },   // Địa chỉ đường phố
@@ -26,38 +26,151 @@ const storeSchema = new Schema({
         type: String,
         required: true
     },
-    
+
     // Quản lý nhân sự cửa hàng
     manager: {
         type: Schema.Types.ObjectId,
-        ref: 'User', 
+        ref: 'User',
         required: true
     },
-    
+
     staff: [{
         type: Schema.Types.ObjectId,
         ref: 'User'
     }],
-    
-    // Menu và sản phẩm có sẵn tại cửa hàng
+
+    // Menu và sản phẩm có sẵn tại cửa hàng với trạng thái riêng
     products: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Product' // Danh sách sản phẩm có sẵn tại cửa hàng này
+        productId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Product',
+            required: true
+        },
+        // Trạng thái riêng của sản phẩm tại cửa hàng này
+        storeStatus: {
+            type: String,
+            enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
+            default: 'available'
+        },
+        // Ngày thêm sản phẩm vào cửa hàng
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        // Ngày cập nhật trạng thái cuối cùng
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
     }],
-    
+
     // Danh mục sản phẩm có sẵn tại cửa hàng - dành cho sidebar filtering
     categories: [{
-        type: Schema.Types.ObjectId,
-        ref: 'Category' // Categories available at this store for menu filtering
+        categoryId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Category',
+            required: true
+        },
+        // Trạng thái riêng của danh mục tại cửa hàng này
+        storeStatus: {
+            type: String,
+            enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
+            default: 'available'
+        },
+        // Ngày thêm danh mục vào cửa hàng
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        // Ngày cập nhật trạng thái cuối cùng
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
     }],
-    
+
+    // Topping có sẵn tại cửa hàng này với trạng thái riêng
+    toppings: [{
+        toppingId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Topping',
+            required: true
+        },
+        // Trạng thái riêng của topping tại cửa hàng này
+        storeStatus: {
+            type: String,
+            enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
+            default: 'available'
+        },
+        // Ngày thêm topping vào cửa hàng
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+         // Ngày cập nhật trạng thái cuối cùng
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
+    // Đơn hàng được xử lý tại cửa hàng này
+    orders: [{
+        orderId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Order',
+            required: true
+        },
+        // Trạng thái riêng của đơn hàng tại cửa hàng này
+        storeStatus: {
+            type: String,
+            enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
+            default: 'available'
+        },
+        // Ngày thêm sản phẩm vào cửa hàng
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        // Ngày cập nhật trạng thái cuối cùng
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
+    // Phương thức thanh toán được hỗ trợ tại cửa hàng này
+    payments: [{
+        paymentId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Payment',
+            required: true
+        },
+        // Trạng thái riêng của đơn hàng tại cửa hàng này
+        storeStatus: {
+            type: String,
+            enum: ['available', 'paused', 'unavailable', 'out_of_stock'],
+            default: 'available'
+        },
+        // Ngày thêm sản phẩm vào cửa hàng
+        addedAt: {
+            type: Date,
+            default: Date.now
+        },
+        // Ngày cập nhật trạng thái cuối cùng
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
     // Trạng thái hoạt động của cửa hàng
     status: {
         type: String,
         enum: ['active', 'inactive', 'closed'],
         default: 'active'
     },
-    
+
     // Giờ hoạt động của cửa hàng
     operatingHours: {
         monday: { open: String, close: String },      // Thứ 2
@@ -68,13 +181,13 @@ const storeSchema = new Schema({
         saturday: { open: String, close: String },    // Thứ 7
         sunday: { open: String, close: String }       // Chủ nhật
     },
-    
+
     // Thông số kinh doanh
     capacity: {
         type: Number,
         default: 50 // Số lượng khách hàng có thể phục vụ
     },
-    
+
     monthlyTarget: {
         type: Number,
         default: 0 // Mục tiêu doanh số hàng tháng

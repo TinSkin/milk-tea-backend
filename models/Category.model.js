@@ -15,10 +15,10 @@ const categorySchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['available', 'unavailable'],
+        enum: ['available', 'paused', 'unavailable'],
         default: 'available',
         required: true
-    }
+    }                                                             
 }, {
     timestamps: true
 })

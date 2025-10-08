@@ -2,13 +2,14 @@ import Store from "../models/Store.model.js";
 import User from "../models/User.model.js";
 import Product from "../models/Product.model.js";
 import Order from "../models/Order.model.js";
+import Category from "../models/Category.model.js";
 
 //! Lấy danh sách thành phố có cửa hàng hoạt động
 export const getCities = async (req, res) => {
     try {
         // Lấy danh sách unique cities từ stores đang hoạt động
         const cities = await Store.distinct('address.city', { status: 'active' });
-        
+
         // Lọc bỏ null/undefined và sort A-Z
         const filteredCities = cities.filter(city => city).sort();
 
@@ -31,7 +32,7 @@ export const getCities = async (req, res) => {
 export const getStoresByCity = async (req, res) => {
     try {
         const { city } = req.query;
-        
+
         if (!city) {
             return res.status(400).json({
                 success: false,
@@ -44,8 +45,8 @@ export const getStoresByCity = async (req, res) => {
             'address.city': { $regex: city, $options: 'i' },
             status: 'active'
         })
-        .select('storeName storeCode address phone openTime closeTime deliveryRadius status')
-        .sort({ storeName: 1 });
+            .select('storeName storeCode address phone openTime closeTime deliveryRadius status')
+            .sort({ storeName: 1 });
 
         res.status(200).json({
             success: true,
@@ -70,7 +71,7 @@ export const getStoresByCity = async (req, res) => {
 export const getStoreProducts = async (req, res) => {
     try {
         const { storeId } = req.params;
-        
+
         // Lấy tham số phân trang
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 8;
@@ -81,7 +82,7 @@ export const getStoreProducts = async (req, res) => {
         const category = req.query.category || 'all';
         const sortBy = req.query.sortBy || 'createdAt';
         const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
-        
+
         if (!storeId) {
             return res.status(400).json({
                 success: false,
@@ -92,7 +93,7 @@ export const getStoreProducts = async (req, res) => {
         // Kiểm tra store có tồn tại và đang hoạt động không
         const store = await Store.findOne({ _id: storeId, status: 'active' })
             .select('storeName storeCode address products');
-        
+
         if (!store) {
             return res.status(404).json({
                 success: false,
@@ -102,15 +103,22 @@ export const getStoreProducts = async (req, res) => {
 
         console.log("🔍 Store found:", store.storeName);
         console.log("🔍 Store products count:", store.products.length);
-        console.log("🔍 Store products IDs:", store.products);
+        console.log("🔍 Store products structure:", store.products[0]);
+
+        // Lấy danh sách productId từ store.products và chỉ những sản phẩm có storeStatus available
+        const availableStoreProducts = store.products.filter(p => p.storeStatus === 'available');
+        const productIds = availableStoreProducts.map(p => p.productId);
+
+        console.log("🔍 Available store products:", availableStoreProducts.length);
+        console.log("🔍 Product IDs to query:", productIds);
 
         // Tạo điều kiện lọc cho sản phẩm
         let filter = {};
-        
-        // Chỉ lấy sản phẩm thuộc cửa hàng này và có trạng thái available
-        filter._id = { $in: store.products };
-        filter.status = 'available';
-        
+
+        // Chỉ lấy sản phẩm thuộc cửa hàng này, có trạng thái available trong Product model VÀ có storeStatus available
+        filter._id = { $in: productIds };
+        filter.status = 'available'; // Status gốc từ Product model
+
         // Tìm kiếm theo tên hoặc mô tả
         if (search) {
             filter.$or = [
@@ -118,7 +126,7 @@ export const getStoreProducts = async (req, res) => {
                 { description: { $regex: search, $options: 'i' } }
             ];
         }
-        
+
         // Lọc theo danh mục
         if (category && category !== 'all') {
             filter.category = category;
@@ -133,7 +141,7 @@ export const getStoreProducts = async (req, res) => {
         // Đếm tổng số sản phẩm và lấy danh sách sản phẩm với phân trang
         const totalProducts = await Product.countDocuments(filter);
         console.log("🔍 Total products found:", totalProducts);
-        
+
         const products = await Product.find(filter)
             .populate('category', 'name slug')
             .populate('toppings', 'name extraPrice')
@@ -144,6 +152,25 @@ export const getStoreProducts = async (req, res) => {
 
         console.log("🔍 Products returned:", products.length);
         console.log("🔍 First product:", products[0]?.name || "No products");
+
+        // Kết hợp thông tin Product với thông tin Store-specific
+        const productsWithStoreInfo = products.map(product => {
+            const storeProduct = store.products.find(sp => sp.productId.toString() === product._id.toString());
+            return {
+                ...product.toObject(),
+                // Thông tin riêng của store
+                storeInfo: {
+                    storeStatus: storeProduct?.storeStatus || 'available',
+                    stockQuantity: storeProduct?.stockQuantity || 0,
+                    customPrice: storeProduct?.customPrice || null,
+                    storeNotes: storeProduct?.storeNotes || null,
+                    addedAt: storeProduct?.addedAt,
+                    lastUpdated: storeProduct?.lastUpdated
+                }
+            };
+        });
+
+        console.log("🔍 Products with store info:", productsWithStoreInfo.length);
 
         // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalProducts / limit);
@@ -161,7 +188,7 @@ export const getStoreProducts = async (req, res) => {
                     storeCode: store.storeCode,
                     address: store.address
                 },
-                products: products,
+                products: productsWithStoreInfo,
                 pagination: {
                     currentPage: page,
                     totalPages,
@@ -186,7 +213,7 @@ export const getStoreProducts = async (req, res) => {
 export const getStoreCategories = async (req, res) => {
     try {
         const { storeId } = req.params;
-        
+
         if (!storeId) {
             return res.status(400).json({
                 success: false,
@@ -201,7 +228,7 @@ export const getStoreCategories = async (req, res) => {
                 select: 'name slug description status'
             })
             .select('storeName categories');
-        
+
         if (!store) {
             return res.status(404).json({
                 success: false,
@@ -233,13 +260,13 @@ export const getStoreCategories = async (req, res) => {
 export const getMyStore = async (req, res) => {
     try {
         const managerId = req.user.userId;
-        
+
         // Tìm store theo managerId và populate các trường liên quan
         const store = await Store.findOne({ manager: managerId })
             .populate('manager', 'userName email phoneNumber')
             .populate('staff', 'userName email phoneNumber role')
             .populate('products', 'name price category image status');
-        
+
         // Nếu không tìm thấy store
         if (!store) {
             return res.status(404).json({
@@ -268,7 +295,7 @@ export const getMyStoreProducts = async (req, res) => {
     try {
         const managerId = req.user.userId;
         console.log("🔍 Manager ID:", managerId);
-        
+
         // Tìm cửa hàng và populate sản phẩm
         const store = await Store.findOne({ manager: managerId })
             .populate({
@@ -278,13 +305,13 @@ export const getMyStoreProducts = async (req, res) => {
                     select: 'name'
                 }
             });
-            
+
         console.log("🔍 Store found for manager:", store?.storeName || "No store");
         if (store) {
             console.log("🔍 Store products count:", store.products.length);
             console.log("🔍 First product:", store.products[0]?.name || "No products");
         }
-            
+
         if (!store) {
             return res.status(404).json({
                 success: false,
@@ -314,12 +341,198 @@ export const getMyStoreProducts = async (req, res) => {
     }
 };
 
+//! Lấy danh sách nhân viên của cửa hàng mình quản lý (chỉ staff và customer)
+export const getMyStoreStaff = async (req, res) => {
+    try {
+        const managerId = req.user.userId;
+
+        // Lấy tham số phân trang từ query
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Lấy tham số lọc
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
+        const role = req.query.role || "all";
+        const sortBy = req.query.sortBy || "createdAt";
+        const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+        const isVerified = req.query.isVerified || "all";
+
+        console.log("Manager ID:", managerId);
+
+        // Tìm cửa hàng trước
+        const store = await Store.findOne({ manager: managerId })
+            .select('_id storeName storeCode address phone email staff');
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy cửa hàng cho manager này"
+            });
+        }
+
+        console.log("Store found:", store.storeName);
+        console.log("Store staff IDs:", store.staff);
+
+        // Logic riêng cho staff và customer
+        let filter;
+
+        if (role === "staff") {
+            // Chỉ lấy staff của cửa hàng này
+            filter = {
+                _id: { $in: store.staff },
+                role: 'staff'
+            };
+        } else if (role === "customer") {
+            // Lấy tất cả customer có assignedStoreId là cửa hàng này
+            filter = {
+                role: 'customer',
+                assignedStoreId: store._id
+            };
+        } else {
+            // Lấy cả staff (trong store.staff) và customer (có assignedStoreId)
+            filter = {
+                $or: [
+                    { _id: { $in: store.staff }, role: 'staff' },
+                    { role: 'customer', assignedStoreId: store._id }
+                ]
+            };
+        }
+
+        // Lọc tìm kiếm (theo tên hoặc email)
+        if (search) {
+            const searchCondition = {
+                $or: [
+                    { userName: { $regex: search, $options: "i" } },
+                    { email: { $regex: search, $options: "i" } }
+                ]
+            };
+
+            // Kết hợp với filter hiện tại
+            filter = {
+                $and: [filter, searchCondition]
+            };
+        }
+
+        // Lọc theo trạng thái
+        if (status !== "all") {
+            const statusCondition = { status: status };
+            filter = filter.$and ?
+                { $and: [...filter.$and, statusCondition] } :
+                { $and: [filter, statusCondition] };
+        }
+
+        // Lọc theo trạng thái xác thực
+        if (isVerified !== "all") {
+            const verifiedCondition = { isVerified: isVerified === "true" };
+            filter = filter.$and ?
+                { $and: [...filter.$and, verifiedCondition] } :
+                { $and: [filter, verifiedCondition] };
+        }
+
+        console.log("Final filter:", filter);
+
+        // Lấy tổng số staff để phân trang
+        const totalStaff = await User.countDocuments(filter);
+
+        // Tạo đối tượng sắp xếp
+        const sort = {};
+        sort[sortBy] = sortOrder;
+
+        // Lấy danh sách staff có phân trang
+        const staff = await User.find(filter)
+            .select('userName email phoneNumber role status assignedStoreId lastLogin isVerified createdAt')
+            .sort(sort)
+            .skip(skip)
+            .limit(limit);
+
+        // Lấy thông tin manager
+        const manager = await User.findById(store.manager)
+            .select('userName email phoneNumber role status');
+
+        // Tính toán thông tin phân trang
+        const totalPages = Math.ceil(totalStaff / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        // Thống kê staff trong store này
+        const staffStatsAgg = await User.aggregate([
+            { $match: filter },
+            {
+                $group: {
+                    _id: null,
+                    totalStaff: { $sum: 1 },
+                    activeStaff: { $sum: { $cond: [{ $eq: ['$isVerified', true] }, 1, 0] } },
+                    inactiveStaff: { $sum: { $cond: [{ $eq: ['$isVerified', false] }, 1, 0] } },
+                    // Thống kê theo status
+                    statusActive: { $sum: { $cond: [{ $eq: ['$status', 'active'] }, 1, 0] } },
+                    statusInactive: { $sum: { $cond: [{ $eq: ['$status', 'inactive'] }, 1, 0] } },
+                    statusBanned: { $sum: { $cond: [{ $eq: ['$status', 'banned'] }, 1, 0] } },
+                    statusSuspended: { $sum: { $cond: [{ $eq: ['$status', 'suspended'] }, 1, 0] } },
+                    // Thống kê theo role
+                    staffCount: { $sum: { $cond: [{ $eq: ['$role', 'staff'] }, 1, 0] } },
+                    customerCount: { $sum: { $cond: [{ $eq: ['$role', 'customer'] }, 1, 0] } }
+                }
+            }
+        ]);
+
+        const stats = staffStatsAgg[0] || {
+            totalStaff: 0,
+            activeStaff: 0,
+            inactiveStaff: 0,
+            statusActive: 0,
+            statusInactive: 0,
+            statusBanned: 0,
+            statusSuspended: 0,
+            staffCount: 0,
+            customerCount: 0
+        };
+
+        console.log("Final staff count:", staff.length);
+        console.log("Total staff:", totalStaff);
+
+        res.status(200).json({
+            success: true,
+            message: "Lấy danh sách nhân viên cửa hàng thành công",
+            data: {
+                storeInfo: {
+                    _id: store._id,
+                    storeName: store.storeName,
+                    storeCode: store.storeCode,
+                    address: store.address,
+                    phone: store.phone,
+                    email: store.email
+                },
+                manager,
+                staff,
+                stats,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    totalStaff,
+                    limit,
+                    hasNextPage,
+                    hasPrevPage
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Lỗi khi lấy danh sách nhân viên cửa hàng:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy danh sách nhân viên cửa hàng",
+            error: error.message
+        });
+    }
+};
+
 //! Cập nhật danh sách sản phẩm cho cửa hàng (thêm/xóa sản phẩm)
 export const updateMyStoreProducts = async (req, res) => {
     try {
         const managerId = req.user.userId;
         const { productIds, action } = req.body; // action: 'add' hoặc 'remove'
-        
+
         // Kiểm tra đầu vào
         if (!productIds || !Array.isArray(productIds) || !action) {
             return res.status(400).json({
@@ -391,7 +604,7 @@ export const updateMyStoreProducts = async (req, res) => {
 export const getMyStoreStats = async (req, res) => {
     try {
         const managerId = req.user.userId;
-        
+
         // Tìm cửa hàng
         const store = await Store.findOne({ manager: managerId });
         if (!store) {
@@ -404,12 +617,12 @@ export const getMyStoreStats = async (req, res) => {
         // Thống kê cơ bản
         const totalProducts = store.products.length;
         const totalStaff = store.staff.length;
-        
+
         // Thống kê đơn hàng (nếu có Order model)
         const totalOrders = await Order.countDocuments({ storeId: store._id });
-        const completedOrders = await Order.countDocuments({ 
-            storeId: store._id, 
-            status: 'completed' 
+        const completedOrders = await Order.countDocuments({
+            storeId: store._id,
+            status: 'completed'
         });
 
         // Doanh thu tháng này (ví dụ)
@@ -463,7 +676,7 @@ export const getMyStoreOrders = async (req, res) => {
     try {
         const managerId = req.user.userId;
         const { status, page = 1, limit = 10 } = req.query;
-        
+
         // Tìm cửa hàng
         const store = await Store.findOne({ manager: managerId });
         if (!store) {
@@ -481,7 +694,7 @@ export const getMyStoreOrders = async (req, res) => {
 
         // Phân trang
         const skip = (page - 1) * limit;
-        
+
         const orders = await Order.find(query)
             .populate('userId', 'userName email phoneNumber')
             .sort({ createdAt: -1 })
@@ -518,11 +731,232 @@ export const getMyStoreOrders = async (req, res) => {
     }
 };
 
+//! Lấy danh sách categories của cửa hàng mình quản lý
+export const getMyStoreCategories = async (req, res) => {
+    try {
+        const managerId = req.user.userId;
+
+        // Lấy tham số phân trang
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Lấy tham số lọc
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
+        const sortBy = req.query.sortBy || "addedAt";
+        const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+
+        // Tìm cửa hàng và populate categories với điều kiện lọc
+        const store = await Store.findOne({ manager: managerId })
+            .populate({
+                path: 'categories.categoryId',
+                select: 'name slug description status',
+                match: status !== "all" ? { status: status } : {},
+                ...(search && {
+                    match: {
+                        ...(status !== "all" ? { status: status } : {}),
+                        name: { $regex: search, $options: "i" }
+                    }
+                })
+            })
+            .select('storeName storeCode categories');
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy cửa hàng cho manager này"
+            });
+        }
+
+        // Lọc categories có storeStatus available và categoryId không null (do populate match)
+        let availableCategories = store.categories
+            .filter(cat => cat.storeStatus === 'available' && cat.categoryId)
+            .map(cat => ({
+                _id: cat.categoryId._id,
+                name: cat.categoryId.name,
+                slug: cat.categoryId.slug,
+                description: cat.categoryId.description,
+                status: cat.categoryId.status,
+                storeStatus: cat.storeStatus,
+                addedAt: cat.addedAt,
+                lastUpdated: cat.lastUpdated
+            }));
+
+        // Sắp xếp theo sortBy
+        availableCategories.sort((a, b) => {
+            let aValue = a[sortBy];
+            let bValue = b[sortBy];
+
+            // Xử lý trường hợp sortBy là addedAt hoặc lastUpdated
+            if (sortBy === 'addedAt' || sortBy === 'lastUpdated') {
+                aValue = new Date(aValue);
+                bValue = new Date(bValue);
+            }
+
+            if (sortOrder === 1) {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+
+        // Tính toán tổng số sau khi lọc
+        const totalCategories = availableCategories.length;
+
+        // Áp dụng pagination trên mảng đã lọc
+        const paginatedCategories = availableCategories.slice(skip, skip + limit);
+
+        // Tính toán thông tin phân trang
+        const totalPages = Math.ceil(totalCategories / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        res.status(200).json({
+            success: true,
+            message: "Lấy danh sách categories cửa hàng thành công",
+            data: {
+                storeInfo: {
+                    _id: store._id,
+                    storeName: store.storeName,
+                    storeCode: store.storeCode
+                },
+                categories: paginatedCategories,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    totalCategories,
+                    limit,
+                    hasNextPage,
+                    hasPrevPage
+                },
+            }
+        });
+    } catch (error) {
+        console.error("Lỗi khi lấy categories cửa hàng:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy categories cửa hàng",
+            error: error.message
+        });
+    }
+};
+
+//! Lấy danh sách toppings của cửa hàng mình quản lý
+export const getMyStoreToppings = async (req, res) => {
+    try {
+        const managerId = req.user.userId;
+
+        // Lấy tham số phân trang
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Lấy tham số lọc
+        const search = req.query.search || "";
+        const status = req.query.status || "all";
+        const sortBy = req.query.sortBy || "createdAt";
+        const sortOrder = req.query.sortOrder === "asc" ? 1 : -1;
+
+        // Tìm cửa hàng và populate toppings
+        const store = await Store.findOne({ manager: managerId })
+            .populate({
+                path: 'toppings.toppingId',
+                select: 'name extraPrice description status',
+                match: status !== "all" ? { status: status } : {},
+                ...(search && {
+                    match: {
+                        ...(status !== "all" ? { status: status } : {}),
+                        name: { $regex: search, $options: "i" }
+                    }
+                })
+            })
+            .select('storeName storeCode toppings');
+
+        if (!store) {
+            return res.status(404).json({
+                success: false,
+                message: "Không tìm thấy cửa hàng cho manager này"
+            });
+        }
+
+        // Lọc chỉ toppings có storeStatus available
+        let availableToppings = store.toppings
+            .filter(topping => topping.storeStatus === 'available' && topping.toppingId)
+            .map(topping => ({
+                _id: topping.toppingId._id,
+                name: topping.toppingId.name,
+                extraPrice: topping.toppingId.extraPrice,
+                description: topping.toppingId.description,
+                status: topping.toppingId.status,
+                storeStatus: topping.storeStatus,
+                addedAt: topping.addedAt
+            }));
+
+        // Sắp xếp theo sortBy
+        availableToppings.sort((a, b) => {
+            let aValue = a[sortBy];
+            let bValue = b[sortBy];
+
+            // Xử lý trường hợp sortBy là addedAt hoặc lastUpdated
+            if (sortBy === 'addedAt' || sortBy === 'lastUpdated') {
+                aValue = new Date(aValue);
+                bValue = new Date(bValue);
+            }
+
+            if (sortOrder === 1) {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+
+        // Tính toán tổng số sau khi lọc
+        const totalToppings = availableToppings.length;
+
+        // Áp dụng pagination trên mảng đã lọc
+        const paginatedToppings = availableToppings.slice(skip, skip + limit);
+
+        // Tính toán thông tin phân trang
+        const totalPages = Math.ceil(totalToppings / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+
+        res.status(200).json({
+            success: true,
+            message: "Lấy danh sách toppings cửa hàng thành công",
+            data: {
+                storeInfo: {
+                    _id: store._id,
+                    storeName: store.storeName,
+                    storeCode: store.storeCode
+                },
+                toppings: paginatedToppings,
+                pagination: {
+                    currentPage: page,
+                    totalPages,
+                    totalToppings,
+                    limit,
+                    hasNextPage,
+                    hasPrevPage
+                },
+            }
+        });
+    } catch (error) {
+        console.error("Lỗi khi lấy toppings cửa hàng:", error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server khi lấy toppings cửa hàng",
+            error: error.message
+        });
+    }
+};
+
 //! Lấy tất cả cửa hàng (dành cho admin)
 export const getAllStores = async (req, res) => {
     try {
         const { page = 1, limit = 10, search, city } = req.query;
-        
+
         // Tạo truy vấn tìm kiếm
         const query = {};
         if (search) {
@@ -536,7 +970,7 @@ export const getAllStores = async (req, res) => {
         }
 
         const skip = (page - 1) * limit;
-        
+
         const stores = await Store.find(query)
             .populate('manager', 'userName email')
             .populate('staff', 'userName email role')
@@ -574,12 +1008,12 @@ export const getAllStores = async (req, res) => {
 export const getStoreById = async (req, res) => {
     try {
         const { storeId } = req.params;
-        
+
         const store = await Store.findById(storeId)
             .populate('manager', 'userName email phoneNumber')
             .populate('staff', 'userName email phoneNumber role')
             .populate('products', 'name price category image status');
-            
+
         if (!store) {
             return res.status(404).json({
                 success: false,
@@ -606,7 +1040,7 @@ export const getStoreById = async (req, res) => {
 export const createStore = async (req, res) => {
     try {
         const { storeName, storeCode, address, phone, email, managerId, staff, products } = req.body;
-        
+
         // Kiểm tra manager tồn tại và có quyền đúng
         const manager = await User.findById(managerId);
         if (!manager || manager.role !== 'storeManager') {
@@ -680,9 +1114,9 @@ export const updateStore = async (req, res) => {
             updateData,
             { new: true, runValidators: true }
         )
-        .populate('manager', 'userName email')
-        .populate('staff', 'userName email role')
-        .populate('products', 'name price');
+            .populate('manager', 'userName email')
+            .populate('staff', 'userName email role')
+            .populate('products', 'name price');
 
         if (!updatedStore) {
             return res.status(404).json({
@@ -706,12 +1140,13 @@ export const updateStore = async (req, res) => {
     }
 };
 
+//! Xóa cửa hàng
 export const deleteStore = async (req, res) => {
     try {
         const { storeId } = req.params;
-        
+
         const deletedStore = await Store.findByIdAndDelete(storeId);
-        
+
         if (!deletedStore) {
             return res.status(404).json({
                 success: false,
