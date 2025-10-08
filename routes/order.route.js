@@ -27,14 +27,7 @@ router.get('/my-orders', verifyToken, getCustomerOrders);
 // Hủy đơn hàng (Customer only)
 router.post('/:id/cancel', verifyToken, cancelOrder);
 
-/**
- * =========================
- * SHARED ROUTES
- * - Customer xem chi tiết đơn hàng của mình
- * - Admin xem chi tiết tất cả đơn hàng
- * =========================
- */
-router.get('/:id', verifyToken, getOrderById);
+
 
 /**
  * =========================
@@ -53,5 +46,14 @@ router.put('/:id/payment', verifyToken, /* verifyAdmin, */ updatePaymentStatus);
 
 // Thống kê đơn hàng (Admin)
 router.get('/admin/stats', verifyToken, /* verifyAdmin, */ getOrderStats);
+
+/**
+ * =========================
+ * SHARED ROUTES
+ * - Customer xem chi tiết đơn hàng của mình
+ * - Admin xem chi tiết tất cả đơn hàng
+ * =========================
+ */
+router.get('/:id', verifyToken, getOrderById);
 
 export default router;
