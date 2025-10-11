@@ -4,8 +4,7 @@ const cartSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-        required: true,
-        unique: true // Mỗi user chỉ có 1 cart
+        required: true
     },
     storeId: {
         type: Schema.Types.ObjectId,
@@ -51,6 +50,13 @@ const cartSchema = new Schema({
 }, {
     timestamps: true
 });
+
+// Tạo index để đảm bảo mỗi user chỉ có 1 giỏ hàng active trên 1 cửa hàng
+cartSchema.index(
+    { userId: 1, storeId: 1, status: 1 },
+    { unique: true, partialFilterExpression: { status: "active" } }
+  );
+  
 
 const Cart = mongoose.model('Cart', cartSchema);
 
