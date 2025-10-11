@@ -1,14 +1,36 @@
 import express from "express";
 import {
-    getCart,
-    addToCart,
+  getCart,
+  addToCart,
+  updateQuantity,
+  updateCartItem,
+  mergeDuplicateItems,
+  removeFromCart,
+  clearCart,
 } from "../controllers/cart.controller.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
 
 const router = express.Router();
 
-//! Các route dành cho người dùng - người dùng có tài khoản 
-router.get("/", verifyToken, getCart); // Lấy giỏ hàng của người dùng
-router.post("/", verifyToken, addToCart); // Thêm sản phẩm vào giỏ hàng
+// Lấy giỏ hàng người dùng
+router.get("/", verifyToken, getCart);
+
+// Thêm sản phẩm hoặc tăng số lượng
+router.post("/add", verifyToken, addToCart);
+
+// Cập nhật số lượng thủ công
+router.put("/quantity", verifyToken, updateQuantity);
+
+// Cập nhật cấu hình item (topping, size, v.v.)
+router.put("/item", verifyToken, updateCartItem);
+
+// Gom sản phẩm trùng cấu hình
+router.put("/merge", verifyToken, mergeDuplicateItems);
+
+// Xóa 1 sản phẩm khỏi giỏ
+router.delete("/item", verifyToken, removeFromCart);
+
+// Làm trống giỏ hàng
+router.delete("/clear", verifyToken, clearCart);
 
 export default router;
