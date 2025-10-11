@@ -3,7 +3,7 @@ import Cart from '../models/Cart.model.js';
 //! Lấy giỏ hàng của người dùng
 export const getCart = async (req, res) => {
     try {
-        const userId = req.userId || req.user?.id;
+        const userId = req.userId || req.user?._id;
 
         // Tìm giỏ hàng active của user
         const cart = await Cart.findOne({
