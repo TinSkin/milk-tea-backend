@@ -1,25 +1,23 @@
 import express from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
-import { checkRole, checkAdminRole, checkStoreManagerRole } from "../middlewares/checkRole.js";
+import { checkAdminRole, checkStoreManagerRole, checkRole } from "../middlewares/checkRole.js";
+import { getCities, getStoresByCity, getStoreDetail } from "../controllers/store/store.public.controller.js";
+import { getMyStoreProducts, updateMyStoreProducts } from "../controllers/store/product.manager.controller.js";
+import { getMyStoreCategories } from "../controllers/store/category.manager.controller.js";
+import { getMyStoreToppings } from "../controllers/store/topping.manager.controller.js";
 import {
-    getMyStore,
-    getMyStoreProducts,
-    getMyStoreStaff,
-    getMyStoreCategories,
-    getMyStoreToppings,
-    updateMyStoreProducts,
-    getMyStoreStats,
-    getMyStoreOrders,
     getAllStores,
     getStoreById,
     createStore,
     updateStore,
-    deleteStore,
-    getCities,
-    getStoresByCity,
-    getStoreProducts,
-    getStoreCategories
-} from "../controllers/store.controller.js";
+    deleteStore
+} from "../controllers/store/store.admin.controller.js";
+import { getMyStoreStaff } from "../controllers/store/staff.manager.controller.js";
+import { getMyStoreStats } from "../controllers/store/stats.manager.controller.js";
+import { getMyStoreOrders } from "../controllers/store/order.manager.controller.js";
+import { getStoreProducts } from "../controllers/store/product.public.controller.js";
+import { getStoreCategories } from "../controllers/store/category.public.controller.js";
+import { getMyStore } from "../controllers/store/store.manager.controller.js";
 
 const router = express.Router();
 
