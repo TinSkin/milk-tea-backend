@@ -1,0 +1,12 @@
+controllers/
+  store/
+    store.controller.js(X)
+    store.admin.controller.js(X)           
+    product.controller.js(X)
+    product.manager.controller.js(X)        
+    category.controller.js(X)
+    category.manager.controller.js(X)       
+    order.manager.controller.js(X)
+    staff.manager.controller.js(X)          
+    topping.manager.controller.js(X)        
+    stats.manager.controller.js(X)
