@@ -107,7 +107,7 @@ const storeSchema = new Schema({
             type: Date,
             default: Date.now
         },
-         // Ngày cập nhật trạng thái cuối cùng
+        // Ngày cập nhật trạng thái cuối cùng
         lastUpdated: {
             type: Date,
             default: Date.now
@@ -197,5 +197,4 @@ const storeSchema = new Schema({
 });
 
 const Store = mongoose.model('Store', storeSchema);
-
 export default Store;

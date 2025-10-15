@@ -217,7 +217,6 @@ orderSchema.pre("save", function(next) {
   next();
 });
 
-
 // Nếu model Order đã tồn tại trong cache thì dùng lại, nếu chưa thì tạo mới
 const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 

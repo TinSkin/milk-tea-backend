@@ -16,6 +16,10 @@ import storeRoutes from "./routes/store.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import orderRoutes from "./routes/order.route.js";
 import paymentRoutes from "./routes/payment.route.js";
+// Request routes
+import requestManagerRoutes from "./routes/requests/request.manager.route.js";
+import requestAdminRoutes from "./routes/requests/request.admin.route.js";
+// Logistic routes
 import addressRoutes from "./routes/logistic/address.route.js";
 import geocodeRoutes from "./routes/logistic/geocode.route.js";
 import autocompleteRoutes from "./routes/logistic/autocomplete.route.js";
@@ -58,6 +62,9 @@ app.use("/api/stores", storeRoutes);
 app.use("/api/cart", cartRoutes)
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
+// Request routes
+app.use("/api/manager/requests", requestManagerRoutes);
+app.use("/api/admin/requests", requestAdminRoutes);
 // Logistic routes
 app.use("/api", addressRoutes);
 app.use("/api", geocodeRoutes);
