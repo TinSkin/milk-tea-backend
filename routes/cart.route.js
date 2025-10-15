@@ -22,7 +22,7 @@ router.post("/add", verifyToken, addToCart);
 router.put("/quantity", verifyToken, updateQuantity);
 
 // Cập nhật cấu hình item (topping, size, v.v.)
-router.put("/item", verifyToken, updateCartItem);
+router.put("/update", verifyToken, updateCartItem);
 
 // Gom sản phẩm trùng cấu hình
 router.put("/merge", verifyToken, mergeDuplicateItems);
