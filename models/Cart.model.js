@@ -1,63 +1,101 @@
 import mongoose, { Schema } from "mongoose";
 
-const cartSchema = new Schema({
-    userId: {
+const cartItemSchema = new Schema({
+  productId: {
+    type: Schema.Types.ObjectId,
+    ref: "Product",
+    required: true,
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1,
+    default: 1,
+  },
+  sizeOption: {
+    type: String,
+    enum: ["S", "M", "L"],
+    default: "M",
+  },
+  sizeOptionPrice: {
+    type: Number,
+    default: 0,
+  },
+  sugarLevel: {
+    type: String,
+    enum: ["25%", "50%", "75%", "100%"],
+    default: "100%",
+  },
+  iceOption: {
+    type: String,
+    enum: ["Chung", "Riêng"],
+    default: "Chung",
+  },
+  toppings: [
+    {
+      toppingId: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: "Topping",
+        required: true,
+      },
     },
-    storeId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Store',
-        required: true
-    },
-    items: [{
-        productId: {
-            type: Schema.Types.ObjectId,
-            ref: 'Product',
-            required: true
-        },
-        quantity: {
-            type: Number,
-            required: true,
-            min: 1,
-            default: 1
-        },
-        toppings: [{
-            toppingId: {
-                type: Schema.Types.ObjectId,
-                ref: 'Topping',
-            }
-        }],
-        specialNotes: {
-            type: String,
-            maxLength: 200
-        },
-        addedAt: {
-            type: Date,
-            default: Date.now
-        }
-    }],
-    status: {
-        type: String,
-        enum: ['active', 'ordered', 'abandoned'],
-        default: 'active'
-    },
-    totalAmount: {
-        type: Number,
-        default: 0
-    }
-}, {
-    timestamps: true
+  ],  
+    
+  specialNotes: {
+    type: String,
+    trim: true,
+    maxLength: 200,
+  },
+  price: {
+    type: Number,
+    default: 0,
+  },
+  addedAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-// Tạo index để đảm bảo mỗi user chỉ có 1 giỏ hàng active trên 1 cửa hàng
-cartSchema.index(
-    { userId: 1, storeId: 1, status: 1 },
-    { unique: true, partialFilterExpression: { status: "active" } }
-  );
-  
+const cartSchema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    storeId: {
+      type: Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
+    items: [cartItemSchema],
+    totalAmount: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: String,
+      enum: ["active", "ordered", "abandoned"],
+      default: "active",
+    },
+  },
+  { timestamps: true }
+);
 
-const Cart = mongoose.model('Cart', cartSchema);
+// ✅ Tính tổng tiền trước khi lưu
+cartSchema.pre("save", function (next) {
+  this.totalAmount = this.items.reduce((total, item) => {
+    const toppingTotal = (item.toppings || []).reduce(
+      (s, t) => s + (t.extraPrice || 0),
+      0
+    );
+    const subtotal =
+      (item.price + item.sizeOptionPrice + toppingTotal) * item.quantity;
+    return total + subtotal;
+  }, 0);
+  next();
+});
+
+const Cart = mongoose.models.Cart || mongoose.model("Cart", cartSchema);
 
 export default Cart;
