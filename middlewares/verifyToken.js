@@ -2,38 +2,38 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.model.js';
 
 //! Middleware verifyToken to verify user based on JWT
-export const verifyToken = (req, res, next) => {
-    // Using token from cookie of request
-    const headerToken = req.headers.authorization?.startsWith("Bearer ")
-        ? req.headers.authorization.slice(7)
-        : null;
-
-    // Using token from cookie of request
-    const token = req.cookies?.token || headerToken;
-
-    // If there's no token in cookie will return 401 error ( Unauthorized Error )
-    if (!token) return res.status(401).json({ success: false, message: "Unauthorized !!!" });
-
+export const verifyToken = async (req, res, next) => {
     try {
-        // Handle verify token by secret key ( JWT_TOKEN )
+        const headerToken = req.headers.authorization?.startsWith("Bearer ")
+            ? req.headers.authorization.slice(7)
+            : null;
+
+        const token = req.cookies?.token || headerToken;
+
+        if (!token) {
+            return res.status(401).json({ success: false, message: "Unauthorized !!!" });
+        }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (!decoded) {
+            return res.status(401).json({ success: false, message: "Unauthorized !!!" });
+        }
 
-        // If token is not valid or can't handled will return 401 error ( Unauthorized Error )
-        if (!decoded) return res.status(401).json({ success: false, message: "Unauthorized !!!" });
+        // Lấy user từ DB
+        const user = await User.findById(decoded.id).select("role storeId name email assignedStoreId").lean();
+        if (!user) {
+            return res.status(401).json({ success: false, message: "User không tồn tại" });
+        }
 
-        // Save userId from token to request for middleware/route further use
-        req.userId = decoded.id || decoded._id || decoded.userId;
+        req.user = user;
+        req.userId = user._id;
 
-        // Permit request to go to next middleware/route
         next();
     } catch (error) {
-
+        console.error("verifyToken error:", error);
         if (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError") {
             return res.status(401).json({ success: false, message: "Invalid or expired token" });
         }
-        console.error("Error verifying token:", error);
-
-        //! If there's an error in verifying process will return 500 error ( Bad Server Error)
         return res.status(500).json({ success: false, message: "Internal Server Error" });
     }
 };

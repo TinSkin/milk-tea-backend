@@ -79,6 +79,11 @@ const orderSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    storeId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+      required: true,
+    },
     customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -167,12 +172,14 @@ const orderSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    strictPopulate: false
   }
 );
 
 // Các chỉ mục để cải thiện hiệu suất truy vấn
 orderSchema.index({ orderNumber: 1 });
 orderSchema.index({ customerId: 1 });
+orderSchema.index({ storeId: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ createdAt: -1 });
 orderSchema.index({ "customerInfo.email": 1 });
