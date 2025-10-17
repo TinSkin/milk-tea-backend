@@ -166,3 +166,113 @@ Thiếu targetId (update/delete) || 400 || Thiếu targetId cho update/delete
 Trùng request pending || 409 || Đã tồn tại yêu cầu 'pending' cho đối tượng này.
 Không tìm thấy/không có quyền (mine) || 404 || Không tìm thấy request hoặc không có quyền ...
 Thành công (submit) || 201 || { success: true, data: ... }
+
+# request.admin.controller.js
+
+Controller dành cho **Admin** để **quản lý tất cả Yêu cầu (Request)** thực hiện CRUD trên `product | category | topping`.
+Các Request tạo ra sẽ ở trạng thái `pending` và **chỉ có hiệu lực khi Admin duyệt**.
+
+## Admin duyệt Request
+
+- Chỉ Admin mới có quyền duyệt (approve) Request.
+- Khi duyệt, hệ thống sẽ thực hiện hành động tương ứng (create/update/delete) trên đối tượng mục tiêu (product/category/topping).
+- Sau khi thực hiện hành động, trạng thái của Request sẽ được cập nhật thành `approved`.
+- Nếu không thể thực hiện hành động (ví dụ: đối tượng mục tiêu không tồn tại), trạng thái của Request sẽ được cập nhật thành `rejected` và ghi chú lý do từ chối.
+
+Để đảm bảo tính toàn vẹn dữ liệu, các thao tác duyệt Request sẽ được thực hiện trong một transaction của MongoDB. Ví dụ:
+
+```js
+const session = await mongoose.startSession();
+session.startTransaction();
+```
+
+- Nếu không có transaction:
+  - Tạo Request `create` cho `product` mới → `Product.create(...)` → thất bại (ví dụ: lỗi unique) → Request vẫn ở trạng thái `pending` → không thể retry.
+  - Giả sử khi Admin duyệt một Request “create product” bạn làm 2 bước:
+    - Tạo Product mới trong Product collection.
+    - Thêm productId đó vào Store.products.
+  - Nếu lỗi xảy ra giữa chừng(ví dụ bước 1 thành công nhưng bước 2 lỗi cú pháp):
+    - Product vẫn được tạo.
+    - Nhưng store không chứa sản phẩm đó → database bị lệch(inconsistent).
+
+## Transaction trong MongoDB & Mongoose
+
+### 1. Tổng quan
+
+- Transaction (giao dịch) trong MongoDB giúp đảm bảo **tính toàn vẹn dữ liệu** khi nhiều thao tác database diễn ra cùng lúc.
+  > Nếu **một thao tác lỗi**, thì **toàn bộ các thao tác khác cũng bị huỷ bỏ (rollback)**.
+- Điều này rất quan trọng khi làm các hành động phức tạp như:
+  > Admin duyệt request → tạo sản phẩm mới → thêm sản phẩm đó vào store → cập nhật trạng thái request.
+- Nếu một bước lỗi, transaction đảm bảo không có dữ liệu “nửa chừng”.
+- Mongoose hỗ trợ transaction thông qua `session`.
+
+### 2. Các bước cơ bản trong Mongoose Transaction
+
+#### `mongoose.startSession()`
+
+- Tạo một **session** — đây là “phiên làm việc” để gom các thao tác vào một giao dịch.
+
+```js
+const session = await mongoose.startSession();
+```
+
+#### `session.startTransaction()`
+
+- Bắt đầu một transaction trong session.
+
+```js
+session.startTransaction();
+```
+
+#### `applyRequestEffect(request, { session })`
+
+- Thực hiện các thao tác database cần thiết (tạo/sửa/xoá) trong transaction.
+- Mọi thao tác phải **sử dụng session** để đảm bảo chúng thuộc về transaction này.
+
+```js
+await Product.create([{ ...payload }], { session });
+await Store.updateOne(
+  { _id: storeId },
+  { $push: { products: { productId } } },
+  { session }
+);
+```
+
+#### `session.commitTransaction()`
+
+- Nếu tất cả thao tác thành công, gọi hàm này để **lưu các thay đổi** vào database.
+
+```js
+await session.commitTransaction();
+```
+
+#### `session.abortTransaction()`
+
+- Nếu có lỗi xảy ra, gọi hàm này để **huỷ bỏ tất cả các thay đổi** đã thực hiện trong transaction.
+
+```js
+await session.abortTransaction();
+```
+
+#### `session.endSession()`
+
+- Kết thúc session khi đã hoàn tất (dù thành công hay lỗi).
+
+```js
+session.endSession();
+```
+
+### 3. Notes
+
+- Transaction chỉ hoạt động trên **MongoDB replica set** (bao gồm cả single-node replica set).
+- MongoDB phải chạy trong replica set hoặc sharded cluster để transaction hoạt động đầy đủ.
+  → Khi test local, transaction vẫn chạy được nhưng rollback có thể bị giới hạn.
+- Nên luôn có try...catch...finally để:
+
+✅ commit khi thành công
+
+❌ abort khi lỗi
+
+🔚 endSession sau cùng.
+
+
