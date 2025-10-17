@@ -155,7 +155,7 @@ export async function submitCreateRequest(req, res, next) {
         const payload = body.payload || {};
         const diff = computeDiff(original, payload);
 
-        const doc = await Request.create({
+        const request = await Request.create({
             storeId: body.storeId,
             userId,
             entity,
@@ -171,7 +171,7 @@ export async function submitCreateRequest(req, res, next) {
             timeline: [{ action: "submit", by: userId }],
         });
 
-        res.status(201).json({ success: true, data: doc });
+        res.status(201).json({ success: true, data: request });
     } catch (err) {
         if (err?.code === 11000) {
             err.status = 409;
@@ -209,7 +209,7 @@ export async function submitUpdateRequest(req, res, next) {
         const { original = {}, payload = {} } = body;
         const diff = computeDiff(original, payload);
 
-        const doc = await Request.create({
+        const request = await Request.create({
             storeId: body.storeId,
             userId,
             entity,
@@ -225,7 +225,7 @@ export async function submitUpdateRequest(req, res, next) {
             timeline: [{ action: "submit", by: userId }]
         });
 
-        res.status(201).json({ success: true, data: doc });
+        res.status(201).json({ success: true, data: request });
     } catch (err) {
         next(err);
     }
@@ -261,7 +261,7 @@ export async function submitDeleteRequest(req, res, next) {
         // Kiểm tra không có request 'pending' trùng lặp
         await ensureNoDuplicatePending({ storeId: body.storeId, entity, action, targetId });
 
-        const doc = await Request.create({
+        const request = await Request.create({
             storeId: body.storeId,
             userId,
             entity,
@@ -277,7 +277,7 @@ export async function submitDeleteRequest(req, res, next) {
             timeline: [{ action: "submit", by: userId }]
         });
 
-        res.status(201).json({ success: true, data: doc });
+        res.status(201).json({ success: true, data: request });
     } catch (err) {
         next(err);
     }
@@ -312,13 +312,13 @@ export async function getMyRequests(req, res, next) {
 export async function getMyRequestById(req, res, next) {
     try {
         const userId = req.user?.userId;
-        const doc = await Request.findOne({ _id: req.params.id, userId });
-        if (!doc) {
+        const request = await Request.findOne({ _id: req.params.id, userId });
+        if (!request) {
             const err = new Error("Không tìm thấy request hoặc không có quyền truy cập");
             err.status = 404;
             throw err;
         }
-        res.json({ success: true, data: doc });
+        res.json({ success: true, data: request });
     } catch (err) {
         next(err);
     }
@@ -328,8 +328,8 @@ export async function getMyRequestById(req, res, next) {
 export async function updateMyRequest(req, res, next) {
     try {
         const userId = req.user?.userId;
-        const doc = await Request.findOne({ _id: req.params.id, userId, status: "pending" });
-        if (!doc) {
+        const request = await Request.findOne({ _id: req.params.id, userId, status: "pending" });
+        if (!request) {
             const err = new Error("Chỉ có thể cập nhật request đang ở trạng thái 'pending'");
             err.status = 400;
             throw err;
@@ -337,13 +337,13 @@ export async function updateMyRequest(req, res, next) {
 
         const allowed = ["payload", "original", "reason", "attachments", "tags"];
         for (const key of allowed) {
-            if (req.body[key] !== undefined) doc[key] = req.body[key];
+            if (req.body[key] !== undefined) request[key] = req.body[key];
         }
-        doc.diff = computeDiff(doc.original, doc.payload);
-        doc.timeline.push({ action: "update", by: userId });
+        request.diff = computeDiff(request.original, request.payload);
+        request.timeline.push({ action: "update", by: userId });
 
-        await doc.save();
-        res.json({ success: true, data: doc });
+        await request.save();
+        res.json({ success: true, data: request });
     } catch (err) {
         next(err);
     }
@@ -354,17 +354,17 @@ export async function cancelMyRequest(req, res, next) {
     try {
         const userId = req.user?.userId;
         const body = validateBody(cancelRequestSchema, req.body);
-        const doc = await Request.findOneAndUpdate(
+        const request = await Request.findOneAndUpdate(
             { _id: req.params.id, userId, status: "pending" },
             { status: "cancelled", $push: { timeline: { action: "cancel", note: body.note || "", by: userId } } },
             { new: true }
         );
-        if (!doc) {
+        if (!request) {
             const err = new Error("Không thể hủy request (không tồn tại hoặc không ở trạng thái pending)");
             err.status = 404;
             throw err;
         }
-        res.json({ success: true, data: doc });
+        res.json({ success: true, data: request });
     } catch (err) {
         next(err);
     }
