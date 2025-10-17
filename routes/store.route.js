@@ -14,11 +14,17 @@ import {
 } from "../controllers/store/store.admin.controller.js";
 import { getMyStoreStaff } from "../controllers/store/staff.manager.controller.js";
 import { getMyStoreStats } from "../controllers/store/stats.manager.controller.js";
-import { getMyStoreOrders } from "../controllers/store/order.manager.controller.js";
+import { getMyStoreOrders,  
+    getOrderDetail,
+    updateOrderStatus,
+    updatePaymentStatus,
+    cancelOrder,
+    getOrderStatusHistory } from "../controllers/store/order.manager.controller.js";
 import { getStoreProducts } from "../controllers/store/product.public.controller.js";
 import { getStoreCategories } from "../controllers/store/category.public.controller.js";
 import { getMyStore } from "../controllers/store/store.manager.controller.js";
 
+import { getStoreDashboard, exportDashboardReport } from "../controllers/store/store.dashboard.controller.js";
 const router = express.Router();
 
 //! Các route công khai (không cần xác thực) - dành cho user chọn cửa hàng
@@ -35,6 +41,15 @@ router.put("/my-store/products", verifyToken, checkStoreManagerRole, updateMySto
 router.get("/my-store/stats", verifyToken, checkStoreManagerRole, getMyStoreStats); // Lấy thống kê doanh thu, đơn hàng của cửa hàng
 router.get("/my-store/orders", verifyToken, checkStoreManagerRole, getMyStoreOrders); // Lấy danh sách đơn hàng của cửa hàng
 
+//! CÁC ROUTES MỚI CHO ORDER MANAGEMENT - THÊM VÀO ĐÂY
+router.get("/my-store/orders/:orderId", verifyToken, checkStoreManagerRole, getOrderDetail); // Xem chi tiết đơn hàng
+router.put("/my-store/orders/:orderId/status", verifyToken, checkStoreManagerRole, updateOrderStatus); // Cập nhật trạng thái đơn hàng
+router.put("/my-store/orders/:orderId/payment-status", verifyToken, checkStoreManagerRole, updatePaymentStatus); // Cập nhật trạng thái thanh toán
+router.put("/my-store/orders/:orderId/cancel", verifyToken, checkStoreManagerRole, cancelOrder); // Hủy đơn hàng
+router.get("/my-store/orders/:orderId/history", verifyToken, checkStoreManagerRole, getOrderStatusHistory); // Lấy lịch sử trạng thái đơn hàng
+
+router.get("/my-store/dashboard", verifyToken, checkStoreManagerRole, getStoreDashboard); // Lấy dữ liệu dashboard KPI
+router.get("/my-store/dashboard/export", verifyToken, checkStoreManagerRole, exportDashboardReport); // Export báo cáo dashboard dưới dạng file Excel
 // Route ordering: Express router xử lý routes theo thứ tự được định nghĩa
 // Pattern matching: /:storeId match với bất kỳ string nào, bao gồm "my-store"
 // Conflict: Khi gọi /stores/my-store, nó match với /:storeId thay vì /my-store

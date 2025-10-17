@@ -1,5 +1,6 @@
 
 import mongoose from "mongoose";
+import User from "../models/User.model.js";
 import Order from "../models/Order.model.js";
 import Product from "../models/Product.model.js";
 import Payment from "../models/Payment.model.js";
@@ -35,6 +36,7 @@ const processImagePath = (imagePath) => {
 export const createOrder = async (req, res) => {
   try {
     const userId = req.user?._id || req.userId;
+    const { storeId } = req.body;
     const {
       items,
       shippingAddress,
@@ -66,6 +68,12 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    if (!storeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Thiếu thông tin cửa hàng (storeId)",
+      });
+    }
     // Xử lý danh sách sản phẩm và tính tổng tiền
     let totalAmount = 0;
     const orderItems = [];
@@ -135,6 +143,7 @@ export const createOrder = async (req, res) => {
     const order = new Order({
       orderNumber,
       customerId: userId,
+      storeId: storeId,
       customerInfo: {
         name: req.user?.name || shippingAddress.fullName,
         email: req.user?.email || req.body.customerInfo?.email,
@@ -149,15 +158,15 @@ export const createOrder = async (req, res) => {
       finalAmount,
       notes,
       status: "finding_driver",
-      // statusHistory: [
-      //   {
-      //     status: "finding_driver",
-      //     paymentStatus: "pending",
-      //     timestamp: new Date(),
-      //     note: "Đơn hàng được tạo",
-      //     updatedBy: userId,
-      //   },
-      // ],
+      statusHistory: [
+        {
+          status: "finding_driver",
+          paymentStatus: "pending",
+          timestamp: new Date(),
+          note: "Đơn hàng được tạo",
+          updatedBy: userId,
+        },
+      ],
     });
 
     await order.save();
@@ -219,7 +228,7 @@ export const createOrder = async (req, res) => {
 };
 
 // ============================
-// Lấy danh sách đơn hàng (Admin)
+// Lấy danh sách đơn hàng (Admin / Store Manager)
 // ============================
 export const getOrders = async (req, res) => {
   try {
@@ -240,6 +249,19 @@ export const getOrders = async (req, res) => {
 
     let filter = {};
 
+    // Manager chỉ xem đơn hàng của store mình
+    // Nếu là manager (storeManager)
+    if (req.user.role === "storeManager") {
+      if (!req.user.assignedStoreId) {
+        return res.status(400).json({
+          success: false,
+          message: "Tài khoản manager chưa gán assignedStoreId",
+        });
+      }
+      filter.storeId = new mongoose.Types.ObjectId(req.user.assignedStoreId);
+    }
+    
+
     if (status && status !== "all") filter.status = status;
     if (paymentStatus && paymentStatus !== "all") filter.paymentStatus = paymentStatus;
 
@@ -258,21 +280,13 @@ export const getOrders = async (req, res) => {
       if (endDate) filter.createdAt.$lte = new Date(endDate);
     }
 
+    // Sort
     let sort = {};
     switch (sortBy) {
-      case "oldest":
-        sort.createdAt = 1;
-        break;
-      case "amount_asc":
-        sort.finalAmount = 1;
-        break;
-      case "amount_desc":
-        sort.finalAmount = -1;
-        break;
-      case "newest":
-      default:
-        sort.createdAt = -1;
-        break;
+      case "oldest": sort.createdAt = 1; break;
+      case "amount_asc": sort.finalAmount = 1; break;
+      case "amount_desc": sort.finalAmount = -1; break;
+      default: sort.createdAt = -1;
     }
 
     const orders = await Order.find(filter)
@@ -280,10 +294,13 @@ export const getOrders = async (req, res) => {
       .skip(skip)
       .limit(limitNum)
       .populate("customerId", "name email")
-      .populate("items.productId", "name images status");
+      .populate("items.productId", "name images status")
+      .populate("storeId", "name address city")
+      .lean();
 
+    // Xử lý image path
     const processedOrders = orders.map((order) => ({
-      ...order.toObject(),
+      ...order,
       items: order.items.map((item) => ({
         ...item,
         image: processImagePath(item.productId?.images?.[0] || item.image),
@@ -309,44 +326,60 @@ export const getOrders = async (req, res) => {
   }
 };
 
-
-// Lấy chi tiết đơn hàng
+// Lấy chi tiết đơn hàng - PHIÊN BẢN ĐÃ CẢI THIỆN
 export const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id)
-      .populate("customerId", "name email")
-      .populate("items.productId", "name images status")
-      .populate("statusHistory.updatedBy", "name");
+    const { id } = req.params;
 
-    if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "ID đơn hàng không hợp lệ" });
     }
 
-    // Xử lý hình ảnh cho order detail
-    const processedOrder = {
-      ...order.toObject(),
-      statusHistory: order.statusHistory.map(entry => ({
-        status: entry.status,
-        timestamp: entry.timestamp,
-        note: entry.note,
-        updatedBy: entry.updatedBy,
-      }))
-    };
+    // Lấy user từ database (vì token của bạn không chứa role)
+    const user = await User.findById(req.userId).select("role storeId").lean();
+
+    const order = await Order.findById(id)
+      .populate({ path: "customerId", select: "name email" })
+      .populate({ path: "items.productId", select: "name images status price" })
+      .populate({ path: "storeId", select: "name address city" })
+      .lean();
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy đơn hàng" });
+    }
+
+    // Nếu user là manager, chỉ cho xem đơn hàng thuộc store của họ
+    if (
+      req.user.role === "storeManager" &&
+      order.storeId &&
+      String(order.storeId._id) !== String(req.user.assignedStoreId)
+    ) {
+      return res.status(403).json({ success: false, message: "Không có quyền truy cập đơn hàng này" });
+    }
+    
     
 
-    res.json(processedOrder);
+    // Đảm bảo các giá trị price và quantity có dạng số
+    order.items = order.items.map((item) => ({
+      ...item,
+      price: Number(item.price) || 0,
+      quantity: Number(item.quantity) || 0,
+    }));
+
+    return res.status(200).json({ success: true, order });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Lỗi khi lấy đơn hàng:", error);
+    res.status(500).json({ success: false, message: "Lỗi server khi lấy thông tin đơn hàng" });
   }
 };
-
 // Cập nhật trạng thái đơn hàng (Admin only)
 export const updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+    const { userRole, storeId, userId } = req; // lấy từ middleware xác thực
 
-    // Validate status
+    // Kiểm tra trạng thái hợp lệ
     const validStatuses = [
       "finding_driver",
       "picking_up",
@@ -361,6 +394,7 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    //Tìm đơn hàng
     const order = await Order.findById(id);
     if (!order) {
       return res.status(404).json({
@@ -369,26 +403,32 @@ export const updateOrderStatus = async (req, res) => {
       });
     }
 
+    //Nếu là manager → chỉ được cập nhật đơn hàng thuộc cửa hàng của họ
+    if (userRole === "manager") {
+      if (!storeId || order.storeId.toString() !== storeId.toString()) {
+        return res.status(403).json({
+          success: false,
+          message: "Bạn không có quyền cập nhật đơn hàng này",
+        });
+      }
+    }
+
     // Cập nhật trạng thái đơn hàng
-    order.status = newStatus;
-order.updatedBy = req.userId; // để pre-save hook biết ai cập nhật
-await order.save();
+    order.status = status;
+    order.updatedBy = userId;
 
+    // Cập nhật thanh toán (nếu có)
+    const payment = await Payment.findOne({ orderId: order._id });
 
-    // Cập nhật trạng thái thanh toán dựa trên trạng thái đơn hàng
     if (status === "delivered") {
       order.paymentStatus = "paid";
 
-      // Cập nhật thông tin thanh toán
-      const payment = await Payment.findOne({ orderId: order._id });
       if (payment && payment.paymentMethod === "cod") {
         payment.status = "paid";
         payment.processedAt = new Date();
         await payment.save();
       }
     } else if (status === "cancelled") {
-      // Cập nhật thông tin thanh toán
-      const payment = await Payment.findOne({ orderId: order._id });
       if (payment && payment.status === "pending") {
         payment.status = "failed";
         payment.failureReason = "Order cancelled";
@@ -404,7 +444,7 @@ await order.save();
       order,
     });
   } catch (error) {
-    console.error("Error updating order status:", error);
+    console.error(" Error updating order status:", error);
     res.status(500).json({
       success: false,
       message: "Không thể cập nhật trạng thái đơn hàng",

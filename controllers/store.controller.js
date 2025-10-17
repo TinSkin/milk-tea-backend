@@ -674,62 +674,144 @@ export const getMyStoreStats = async (req, res) => {
 //! Lấy đơn hàng của cửa hàng
 export const getMyStoreOrders = async (req, res) => {
     try {
-        const managerId = req.user.userId;
-        const { status, page = 1, limit = 10 } = req.query;
-
-        // Tìm cửa hàng
-        const store = await Store.findOne({ manager: managerId });
-        if (!store) {
-            return res.status(404).json({
-                success: false,
-                message: "Không tìm thấy cửa hàng cho manager này"
-            });
-        }
-
-        // Tạo truy vấn
-        const query = { storeId: store._id };
-        if (status) {
-            query.status = status;
-        }
-
-        // Phân trang
-        const skip = (page - 1) * limit;
-
-        const orders = await Order.find(query)
-            .populate('userId', 'userName email phoneNumber')
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(parseInt(limit));
-
-        const totalOrders = await Order.countDocuments(query);
-
-        res.status(200).json({
-            success: true,
-            message: "Lấy danh sách đơn hàng cửa hàng thành công",
-            data: {
-                storeInfo: {
-                    storeName: store.storeName,
-                    storeCode: store.storeCode
-                },
-                orders,
-                pagination: {
-                    currentPage: parseInt(page),
-                    totalPages: Math.ceil(totalOrders / limit),
-                    totalOrders,
-                    hasNext: skip + orders.length < totalOrders,
-                    hasPrev: page > 1
-                }
-            }
+      // Chỉ cho manager
+      if (req.user.role !== "storeManager") {
+        return res.status(403).json({
+          success: false,
+          message: "Chỉ có manager mới được truy cập",
         });
+      }
+  
+      const managerId = req.user._id;
+      const store = await Store.findOne({ manager: managerId }).lean();
+      if (!store) {
+        return res.status(404).json({
+          success: false,
+          message: "Không tìm thấy cửa hàng cho manager này",
+        });
+      }
+  
+      const {
+        page = 1,
+        limit = 10,
+        status = "",
+        paymentStatus = "",
+        search = "",
+        sortBy = "newest",
+        startDate = "",
+        endDate = "",
+      } = req.query;
+  
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const skip = (pageNum - 1) * limitNum;
+  
+      const filter = { storeId: store._id };
+  
+      if (status && status !== "all") filter.status = status;
+      if (paymentStatus && paymentStatus !== "all") filter.paymentStatus = paymentStatus;
+  
+      if (search) {
+        filter.$or = [
+          { orderNumber: { $regex: search, $options: "i" } },
+          { "customerInfo.name": { $regex: search, $options: "i" } },
+          { "customerInfo.email": { $regex: search, $options: "i" } },
+          { "shippingAddress.phone": { $regex: search, $options: "i" } },
+        ];
+      }
+  
+      if (startDate || endDate) {
+        filter.createdAt = {};
+        if (startDate) filter.createdAt.$gte = new Date(startDate);
+        if (endDate) filter.createdAt.$lte = new Date(endDate);
+      }
+  
+      // Sort
+      let sort = {};
+      switch (sortBy) {
+        case "oldest": sort.createdAt = 1; break;
+        case "amount_asc": sort.finalAmount = 1; break;
+        case "amount_desc": sort.finalAmount = -1; break;
+        default: sort.createdAt = -1;
+      }
+  
+      const orders = await Order.find(filter)
+        .sort(sort)
+        .skip(skip)
+        .limit(limitNum)
+        .populate({
+          path: "items.productId",
+          select: "name images status price",
+          options: { strictPopulate: false }
+        })
+        .populate("storeId", "storeName storeCode")
+        .lean();
+  
+      // Xử lý image, topping và subtotal
+      const processedOrders = orders.map((order) => {
+        const items = order.items.map((item) => {
+          // Sử dụng image từ item trực tiếp (đã được lưu khi tạo đơn hàng)
+          const productImage = item.image || item.productId?.images?.[0];
+          const productName = item.productName || item.productId?.name || "Sản phẩm không xác định";
+          const price = item.price || item.productId?.price || 0;
+          const quantity = item.quantity || 1;
+          
+          return {
+            ...item,
+            productName,
+            price,
+            quantity,
+            image: processImagePath(productImage),
+            subtotal: price * quantity,
+            toppings: item.toppings || [],
+          };
+        });
+  
+        return {
+          ...order,
+          items,
+          // Đảm bảo customerInfo có đầy đủ thông tin
+          customerInfo: {
+            name: order.customerInfo?.name || "Không xác định",
+            email: order.customerInfo?.email || "",
+            phone: order.shippingAddress?.phone || ""
+          }
+        };
+      });
+  
+      const totalOrders = await Order.countDocuments(filter);
+      const totalPages = Math.ceil(totalOrders / limitNum);
+  
+      res.status(200).json({
+        success: true,
+        message: "Lấy danh sách đơn hàng cửa hàng thành công",
+        data: {
+          storeInfo: {
+            storeName: store.storeName,
+            storeCode: store.storeCode,
+          },
+          orders: processedOrders,
+          pagination: {
+            currentPage: pageNum,
+            totalPages,
+            totalOrders,
+            hasNextPage: pageNum < totalPages,
+            hasPrevPage: pageNum > 1,
+            limit: limitNum,
+          },
+        },
+      });
     } catch (error) {
-        console.error("Lỗi khi lấy đơn hàng cửa hàng:", error);
-        res.status(500).json({
-            success: false,
-            message: "Lỗi server khi lấy đơn hàng cửa hàng",
-            error: error.message
-        });
+      console.error("Lỗi khi lấy đơn hàng cửa hàng:", error);
+      res.status(500).json({
+        success: false,
+        message: "Lỗi server khi lấy đơn hàng cửa hàng",
+        error: error.message,
+      });
     }
-};
+  };
+
+
 
 //! Lấy danh sách categories của cửa hàng mình quản lý
 export const getMyStoreCategories = async (req, res) => {
