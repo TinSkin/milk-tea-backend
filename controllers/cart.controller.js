@@ -60,7 +60,7 @@ export const getCart = async (req, res) => {
 
     let cart = await Cart.findOne({ userId, storeId, status: "active" })
       .populate("items.productId", "name images sizeOptions price category")
-      .populate("items.toppings", "name extraPrice status");
+      .populate("items.toppings.toppingId", "name extraPrice status");
 
     if (!cart) {
       return res
@@ -133,7 +133,11 @@ if (toppings && toppings.length > 0) {
   }
 
   // Lưu toppingId vào cart, không lưu giá
-  toppingList = toppingDocs.map((t) => ({ toppingId: t._id }));
+  toppingList = toppingDocs.map((t) => ({ 
+    toppingId: t._id,
+    name: t.name,
+    extraPrice: t.extraPrice
+  }));
 
   // Tính tổng tiền topping
   toppingTotal = toppingDocs.reduce(
@@ -186,7 +190,7 @@ if (toppings && toppings.length > 0) {
 
     await cart.populate("items.productId", "name images sizeOptions price");
     await cart.populate("items.toppings.toppingId", "name extraPrice status");
-
+    
     res.status(200).json({
       success: true,
       message: "Đã thêm sản phẩm vào giỏ hàng.",

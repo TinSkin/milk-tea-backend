@@ -38,6 +38,8 @@ const cartItemSchema = new Schema({
         ref: "Topping",
         required: true,
       },
+      name: String,
+      extraPrice: Number
     },
   ],  
     
@@ -89,8 +91,7 @@ cartSchema.pre("save", function (next) {
       (s, t) => s + (t.extraPrice || 0),
       0
     );
-    const subtotal =
-      (item.price + item.sizeOptionPrice + toppingTotal) * item.quantity;
+    const subtotal = (item.sizeOptionPrice + toppingTotal) * item.quantity;
     return total + subtotal;
   }, 0);
   next();
