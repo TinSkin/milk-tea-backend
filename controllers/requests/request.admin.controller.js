@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import Request from "../../models/Request.model.js";
 import Store from "../../models/Store.model.js";
-import Product from "../../models/Product.model.js";
-import Category from "../../models/Category.model.js";
-import Topping from "../../models/Topping.model.js";
 import { approveRequestSchema, rejectRequestSchema } from "../../validators/request.validator.js";
 import { validateBody } from "../../validators/request.validator.js";
 
@@ -143,10 +140,25 @@ export async function approveRequest(req, res, next) {
     try {
         const { id } = req.params;
         const adminId = req.userId; // từ verifyToken middleware
+        
+        // Debug log để kiểm tra body
+        console.log("Request body:", req.body);
         const { note } = validateBody(approveRequestSchema, req.body);
+        console.log("Extracted note:", note);
 
         // Tìm request
         const request = await Request.findById(id).session(session);
+        console.log("Found request:", request ? "YES" : "NO");
+        if (request) {
+            console.log("Request details:", {
+                id: request._id,
+                status: request.status,
+                entity: request.entity,
+                action: request.action,
+                storeId: request.storeId
+            });
+        }
+
         if (!request) {
             return res.status(404).json({ success: false, message: "Không tìm thấy request" });
         }
@@ -174,7 +186,8 @@ export async function approveRequest(req, res, next) {
     } catch (error) {
         await session.abortTransaction();
         session.endSession();
-        console.error("Error in approveRequest:", error);
+        console.log("Transaction aborted and session ended");
+        
         res.status(500).json({
             success: false,
             message: "Server error"
@@ -187,7 +200,13 @@ export async function rejectRequest(req, res, next) {
     try {
         const { id } = req.params;
         const adminId = req.userId; // từ verifyToken middleware (giống approveRequest)
-        const { note } = validateBody(rejectRequestSchema, req.body || {});
+        
+        // Debug log để kiểm tra body
+        console.log("Reject request body:", req.body);
+        // Validate body an toàn
+        const validatedData = validateBody(rejectRequestSchema, req.body || {});
+        const note = validatedData?.note || "";
+        console.log("Extracted note for reject:", note);
 
         // Tìm request
         const request = await Request.findById(id);

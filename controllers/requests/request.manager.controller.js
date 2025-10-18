@@ -6,12 +6,17 @@ import {
 import { productPayloadJoi } from "../../validators/product.payload.schema.js";
 import { validateBody } from "../../utils/validateBody.js";
 import Store from "../../models/Store.model.js";
+import { Types } from "mongoose";
 
 const VALID_ACTIONS_BY_TYPE = {
     product: ["create", "update", "delete"],
     category: ["create", "update", "delete"],
     topping: ["create", "update", "delete"],
 };
+
+function asObjectId(id) {
+    return Types.ObjectId.isValid(id) ? new Types.ObjectId(id) : null;
+}
 
 //! Kiểm tra CHT có quản lý cửa hàng hay không
 async function assertManagerOwnsStore(userId, storeId) {
