@@ -2,7 +2,7 @@ import express from "express";
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { checkAdminRole, checkStoreManagerRole, checkRole } from "../middlewares/checkRole.js";
 import { getCities, getStoresByCity, getStoreDetail } from "../controllers/store/store.public.controller.js";
-import { getMyStoreProducts, updateMyStoreProducts } from "../controllers/store/product.manager.controller.js";
+import { getMyStoreProducts, updateMyStoreProducts, updateMyStoreProductStatus } from "../controllers/store/product.manager.controller.js";
 import { getMyStoreCategories } from "../controllers/store/category.manager.controller.js";
 import { getMyStoreToppings } from "../controllers/store/topping.manager.controller.js";
 import {
@@ -37,6 +37,7 @@ router.get("/my-store/products", verifyToken, checkStoreManagerRole, getMyStoreP
 router.get("/my-store/staff", verifyToken, checkStoreManagerRole, getMyStoreStaff); // Lấy danh sách nhân viên (staff + customer) của cửa hàng
 router.get("/my-store/categories", verifyToken, checkStoreManagerRole, getMyStoreCategories); // Lấy danh sách categories có trong cửa hàng
 router.get("/my-store/toppings", verifyToken, checkStoreManagerRole, getMyStoreToppings); // Lấy danh sách toppings có trong cửa hàng
+router.put("/my-store/products/:productId", verifyToken, checkStoreManagerRole, updateMyStoreProductStatus); // Cập nhật trạng thái sản phẩm tại cửa hàng
 router.put("/my-store/products", verifyToken, checkStoreManagerRole, updateMyStoreProducts); // Cập nhật sản phẩm trong cửa hàng (thêm/xóa)
 router.get("/my-store/stats", verifyToken, checkStoreManagerRole, getMyStoreStats); // Lấy thống kê doanh thu, đơn hàng của cửa hàng
 router.get("/my-store/orders", verifyToken, checkStoreManagerRole, getMyStoreOrders); // Lấy danh sách đơn hàng của cửa hàng
