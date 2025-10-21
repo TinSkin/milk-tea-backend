@@ -27,7 +27,7 @@ import autocompleteRoutes from "./routes/logistic/autocomplete.route.js";
 dotenv.config()
 
 // Debug environment variables
-console.log("   Backend Environment Debug:");
+console.log("🔧 Backend Environment Debug:");
 console.log("   NODE_ENV:", process.env.NODE_ENV);
 console.log("   PORT:", process.env.PORT);
 console.log("   MONGO_URI:", process.env.MONGO_URI ? "✅ Set" : "❌ Missing");
@@ -40,57 +40,15 @@ console.log("   CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
 const app = express();
 const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PORT mặc định 5000
 
-//! Hàm lấy allowed origins
-const getAllowedOrigins = () => {
-    const origins = [];
-    
-    // Development URL
-    if (process.env.CLIENT_URL_DEV) {
-        origins.push(process.env.CLIENT_URL_DEV);
-    }
-    
-    // Production URL  
-    if (process.env.CLIENT_URL_PROD) {
-        origins.push(process.env.CLIENT_URL_PROD);
-    }
-    
-    // Fallback cho development
-    if (origins.length === 0) {
-        origins.push("http://localhost:5173");
-    }
-    
-    console.log("Allowed CORS Origins:", origins);
-    return origins;
-};
-
 //! Cấu hình CORS 
 app.use(cors({
-    origin: (origin, callback) => {
-        const allowedOrigins = getAllowedOrigins();
-        
-        console.log(`CORS Check - Request Origin: ${origin}`);
-        
-        // Cho phép requests không có origin (mobile apps, postman, etc.)
-        if (!origin) {
-            console.log("CORS allowed - No origin (mobile/postman)");
-            return callback(null, true);
-        }
-        
-        if (allowedOrigins.includes(origin)) {
-            console.log(`CORS allowed for origin: ${origin}`);
-            callback(null, true);
-        } else {
-            console.log(`CORS blocked for origin: ${origin}`);
-            console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: process.env.CLIENT_URL_PROD,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: [
         "Retry-After",
-        "RateLimit-Reset", 
+        "RateLimit-Reset",
         "RateLimit-Remaining",
         "RateLimit-Limit",
         "X-Debug-VerifyToken"
@@ -122,6 +80,22 @@ app.use("/api/admin/requests", requestAdminRoutes);
 app.use("/api", addressRoutes);
 app.use("/api", geocodeRoutes);
 app.use("/api", autocompleteRoutes);
+
+//! Global error handling middleware
+app.use((error, req, res, next) => {
+    console.error("💥 Global Error Handler:");
+    console.error("   Error:", error.message);
+    console.error("   Stack:", error.stack);
+    console.error("   Request:", req.method, req.path);
+    console.error("   Body:", req.body);
+
+    res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+});
+
 
 app.listen(PORT, () => {
     //! Hàm kết nối MongoDB
