@@ -29,7 +29,8 @@ router.post("/logout", logout);
 router.post("/verify-email", checkEmailLink);
 router.post("/resend-verification-email", rateLimitResendEmail, resendVerificationEmail);
 router.post("/verify-otp", verifyToken, checkOTP);
-router.post("/resend-otp", rateLimitResendEmail, resendVerificationOTP);
+// router.post("/resend-otp", rateLimitResendEmail, resendVerificationOTP);
+router.post("/resend-otp", resendVerificationOTP);
 
 //! Password reset routes
 router.post("/forgot-password", forgotPassword);

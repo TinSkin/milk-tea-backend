@@ -312,25 +312,25 @@ export const resendVerificationEmail = async (req, res) => {
             return res.status(400).json({ success: false, message: "Thiếu email" });
         }
 
-        // 1) Tìm người dùng
+        // Tìm người dùng
         const user = await User.findOne({ email });
         if (!user) {
             return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
         }
 
-        // 2) Nếu đã xác minh thì không gửi nữa
+        // Nếu đã xác minh thì không gửi nữa
         if (user.isVerified) {
             return res.status(400).json({ success: false, message: "Email đã được xác minh" });
         }
 
-        // 3) Tạo token liên kết (JWT) có hiệu lực 15 phút
+        // Tạo token liên kết (JWT) có hiệu lực 15 phút
         const verificationToken = jwt.sign(
             { userId: user._id.toString() },
             process.env.JWT_SECRET,
             { expiresIn: "15m" }
         );
 
-        // 4) Lưu vào cơ sở dữ liệu (đồng bộ thời hạn 15 phút)
+        // Lưu vào cơ sở dữ liệu 
         user.verificationToken = verificationToken;
         user.verificationTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
@@ -340,7 +340,7 @@ export const resendVerificationEmail = async (req, res) => {
             : process.env.CLIENT_URL_DEV;
         const verifyLink = `${base}/verify-email?token=${encodeURIComponent(verificationToken)}`;
 
-        // 5) Gửi email liên kết xác minh
+        // Gửi email liên kết xác minh
         await sendVerificationLinkEmail(user.email, verifyLink);
 
         if (process.env.NODE_ENV !== "production") {
