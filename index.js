@@ -26,13 +26,65 @@ import autocompleteRoutes from "./routes/logistic/autocomplete.route.js";
 
 dotenv.config()
 
+// Debug environment variables
+console.log("   Backend Environment Debug:");
+console.log("   NODE_ENV:", process.env.NODE_ENV);
+console.log("   PORT:", process.env.PORT);
+console.log("   MONGO_URI:", process.env.MONGO_URI ? "✅ Set" : "❌ Missing");
+console.log("   JWT_SECRET:", process.env.JWT_SECRET ? "✅ Set" : "❌ Missing");
+console.log("   GMAIL_USER:", process.env.GMAIL_USER ? "✅ Set" : "❌ Missing");
+console.log("   GMAIL_PASS:", process.env.GMAIL_PASS ? "✅ Set" : "❌ Missing");
+console.log("   CLIENT_URL_DEV:", process.env.CLIENT_URL_DEV);
+console.log("   CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
+
 const app = express();
 const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PORT mặc định 5000
 
+//! Hàm lấy allowed origins
+const getAllowedOrigins = () => {
+    const origins = [];
+    
+    // Development URL
+    if (process.env.CLIENT_URL_DEV) {
+        origins.push(process.env.CLIENT_URL_DEV);
+    }
+    
+    // Production URL  
+    if (process.env.CLIENT_URL_PROD) {
+        origins.push(process.env.CLIENT_URL_PROD);
+    }
+    
+    // Fallback cho development
+    if (origins.length === 0) {
+        origins.push("http://localhost:5173");
+    }
+    
+    console.log("Allowed CORS Origins:", origins);
+    return origins;
+};
+
 //! Cấu hình CORS 
 app.use(cors({
-    // origin: "http://localhost:5173",
-    origin: process.env.CLIENT_URL_PROD,
+    origin: (origin, callback) => {
+        const allowedOrigins = getAllowedOrigins();
+        
+        console.log(`CORS Check - Request Origin: ${origin}`);
+        
+        // Cho phép requests không có origin (mobile apps, postman, etc.)
+        if (!origin) {
+            console.log("CORS allowed - No origin (mobile/postman)");
+            return callback(null, true);
+        }
+        
+        if (allowedOrigins.includes(origin)) {
+            console.log(`CORS allowed for origin: ${origin}`);
+            callback(null, true);
+        } else {
+            console.log(`CORS blocked for origin: ${origin}`);
+            console.log(`Allowed origins: ${allowedOrigins.join(', ')}`);
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
