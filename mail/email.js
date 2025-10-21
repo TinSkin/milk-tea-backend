@@ -3,9 +3,13 @@ import { transporter, sender } from "./nodemailer.config.js";
 
 //! Function to send verification OTP
 export const sendVerificationOTP = async (email, verificationCode) => {
+    console.log("sendVerificationOTP called for:", email);
+    console.log("Verification code:", verificationCode);
+    
     const recipient = [{ email }];
 
     try {
+        console.log("Attempting to send email via transporter...");
         const info = await transporter.sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: email,
@@ -13,9 +17,20 @@ export const sendVerificationOTP = async (email, verificationCode) => {
             html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", verificationCode)
         });
 
-        console.log(`Verification email sent successfully to ${email}:`, info);
+        console.log(`Verification email sent successfully to ${email}:`, info.messageId);
+        console.log("Email info:", {
+            messageId: info.messageId,
+            response: info.response,
+            envelope: info.envelope
+        });
     } catch (error) {
-        console.log(`Error sending verification email:`, error);
+        console.log(`Error sending verification email to ${email}:`, error);
+        console.log("Error details:", {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            stack: error.stack
+        });
         throw new Error(`Error sending verification email: ${error}`);
     }
 };

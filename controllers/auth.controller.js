@@ -146,31 +146,38 @@ export const checkOTP = async (req, res) => {
 
 //! Hàm gửi lại mã xác thực OTP
 export const resendVerificationOTP = async (req, res) => {
+    console.log("resendVerificationOTP called with:", req.body);
+    
     try {
         // Kiểm tra xem email có được cung cấp không
         const req_email = req.body?.email;
         if (!req_email) {
+            console.log("Missing email in request");
             return res.status(400).json({ success: false, message: "Email là bắt buộc" });
         }
 
         // Chuẩn hóa email
         const email = req_email.trim().toLowerCase();
+        console.log("Processing email:", email);
 
         // Tìm người dùng theo email
         const user = await User.findOne({ email });
 
         // Nếu không tìm thấy người dùng
         if (!user) {
+            console.log("User not found for email:", email);
             return res.status(404).json({ success: false, message: "Không tìm thấy người dùng" });
         }
 
         // Nếu người dùng đã được xác thực
         if (user.isVerified) {
+            console.log("User already verified:", email);
             return res.status(400).json({ success: false, message: "Email đã được xác minh" });
         }
 
         // Tạo token xác thực mới
         const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+        console.log("Generated verification code for:", email);
 
         // Cập nhật mã xác thực và thời gian hết hạn của người dùng
         user.verificationCode = verificationCode;
@@ -178,14 +185,18 @@ export const resendVerificationOTP = async (req, res) => {
 
         // Lưu người dùng đã cập nhật
         await user.save();
+        console.log("User verification code updated in database");
 
         // Gửi email xác thực mới cho người dùng
+        console.log("Attempting to send verification email...");
         await sendVerificationOTP(user.email, verificationCode);
+        console.log("Verification email sent successfully");
 
         // Trả về thông báo thành công
         res.status(200).json({ success: true, message: "Mã xác thực mới đã được gửi. Vui lòng kiểm tra email của bạn." });
     } catch (error) {
-        console.error("Error resending verification email:", error);
+        console.error("Error in resendVerificationOTP:", error);
+        console.error("Error stack:", error.stack);
         res.status(500).json({ success: false, message: "Lỗi kết nối đến máy chủ" });
     }
 };

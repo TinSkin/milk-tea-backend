@@ -38,7 +38,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: [
         "Retry-After",
-        "RateLimit-Reset",
+        "RateLimit-Reset", 
         "RateLimit-Remaining",
         "RateLimit-Limit",
         "X-Debug-VerifyToken"
