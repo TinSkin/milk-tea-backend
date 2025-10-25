@@ -72,7 +72,7 @@ export const checkOTP = async (req, res) => {
             return res.status(400).json({ success: false, message: "Mã OTP không hợp lệ" });
         }
 
-        const userId = req.userId || req.user?.id;
+        const userId = req.userId || req.user?._id;
         if (!userId) {
             return res.status(401).json({ success: false, message: "Unauthorized" });
         }
