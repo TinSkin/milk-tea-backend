@@ -1,5 +1,5 @@
 import { VERIFICATION_EMAIL_TEMPLATE, VERIFICATION_LINK_EMAIL_TEMPLATE, WELCOME_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./emailTemplates.js";
-import { transporter, sender } from "./nodemailer.config.js";
+ import { sendMail, sender } from "./nodemailer.config.js";
 
 //! Function to send verification OTP
 export const sendVerificationOTP = async (email, verificationCode) => {
@@ -9,15 +9,15 @@ export const sendVerificationOTP = async (email, verificationCode) => {
     const recipient = [{ email }];
 
     try {
-        console.log("Attempting to send email via transporter...");
-        const info = await transporter.sendMail({
+        console.log("Attempting to send email with fallback strategy...");
+        const info = await sendMail({
             from: `${sender.name} <${sender.email}>`,
             to: email,
             subject: "Penny Milk Tea - Xác thực email của bạn",
             html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", verificationCode)
         });
 
-        console.log(`Verification email sent successfully to ${email}:`, info.messageId);
+        console.log(`✅ Verification email sent successfully to ${email}:`, info.messageId);
         console.log("Email info:", {
             messageId: info.messageId,
             response: info.response,
