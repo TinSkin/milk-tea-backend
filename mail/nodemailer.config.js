@@ -17,6 +17,16 @@ if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
 }
 
 // ChatGPT's advanced configuration with fallback strategy
+// Primary: Official Nodemailer approach with service: "gmail"
+export const transporter = nodemailer.createTransport({
+  service: "gmail",  // Let Nodemailer handle optimal Gmail settings
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,  // App Password 16 characters
+  },
+});
+
+// Backup: Manual configuration function
 function makeTransport({ port, secure }) {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -36,16 +46,18 @@ function makeTransport({ port, secure }) {
 
 export async function sendMail(opts) {
   try {
-    console.log("🔄 Trying port 587 (STARTTLS)...");
-    return await makeTransport({ port: 587, secure: false }).sendMail(opts);
+    console.log("🔄 Trying service: 'gmail' approach...");
+    return await transporter.sendMail(opts);
   } catch (e) {
-    console.log("❌ Port 587 failed:", e.message);
-    if (e?.code === "ETIMEDOUT" || e?.command === "CONN" || e?.code === "ECONNRESET") {
-      console.log("🔄 Fallback to port 465 (SSL)...");
-      // fallback TLS 465
+    console.log("❌ Service 'gmail' failed:", e.message);
+    console.log("🔄 Fallback to manual port 587...");
+    try {
+      return await makeTransport({ port: 587, secure: false }).sendMail(opts);
+    } catch (e2) {
+      console.log("❌ Port 587 failed:", e2.message);
+      console.log("🔄 Final fallback to port 465...");
       return await makeTransport({ port: 465, secure: true }).sendMail(opts);
     }
-    throw e;
   }
 }
 
