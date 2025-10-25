@@ -27,23 +27,23 @@ import autocompleteRoutes from "./routes/logistic/autocomplete.route.js";
 dotenv.config()
 
 // Debug environment variables
-console.log("🔧 Backend Environment Debug:");
-console.log("   NODE_ENV:", process.env.NODE_ENV);
-console.log("   PORT:", process.env.PORT);
-console.log("   MONGO_URI:", process.env.MONGO_URI ? " Set" : " Missing");
-console.log("   JWT_SECRET:", process.env.JWT_SECRET ? " Set" : " Missing");
-console.log("   GMAIL_USER:", process.env.GMAIL_USER ? " Set" : " Missing");
-console.log("   GMAIL_PASS:", process.env.GMAIL_PASS ? " Set" : " Missing");
-console.log("   CLIENT_URL_DEV:", process.env.CLIENT_URL_DEV);
-console.log("   CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
+console.log(" Backend Environment Debug:");
+console.log(" NODE_ENV:", process.env.NODE_ENV);
+console.log(" PORT:", process.env.PORT);
+console.log(" MONGO_URI:", process.env.MONGO_URI ? " Set" : " Missing");
+console.log(" JWT_SECRET:", process.env.JWT_SECRET ? " Set" : " Missing");
+console.log(" GMAIL_USER:", process.env.GMAIL_USER ? " Set" : " Missing");
+console.log(" GMAIL_PASS:", process.env.GMAIL_PASS ? " Set" : " Missing");
+console.log(" CLIENT_URL_DEV:", process.env.CLIENT_URL_DEV);
+console.log(" CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
 
 const app = express();
 const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PORT mặc định 5000
 
 //! Cấu hình CORS 
 app.use(cors({
-    // origin: "http://localhost:5173",
-    origin: process.env.CLIENT_URL_PROD,
+    origin: "http://localhost:5173",
+    // origin: process.env.CLIENT_URL_PROD,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

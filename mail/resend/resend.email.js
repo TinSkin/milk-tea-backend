@@ -3,32 +3,40 @@ import { VERIFICATION_EMAIL_TEMPLATE, VERIFICATION_LINK_EMAIL_TEMPLATE, WELCOME_
 
 //! Hàm gửi mã OTP xác thực email qua Resend
 export const sendVerificationOTP = async (email, verificationCode) => {
-    console.log(" sendVerificationOTP called for:", email);
+    console.log("📧 sendVerificationOTP called for:", email);
     console.log("🔑 Verification code:", verificationCode);
+    console.log("📤 Email details:", { from: `${sender.name} <${sender.email}>`, to: email });
     
     try {
-        console.log(" Attempting to send email via Resend...");
+        console.log("🚀 Attempting to send email via Resend...");
         
-        const { data, error } = await resend.emails.send({
+        const emailPayload = {
             from: `${sender.name} <${sender.email}>`,
             to: email,
             subject: "Penny Milk Tea - Xác thực email của bạn",
             html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", verificationCode)
-        });
+        };
+        
+        console.log("📋 Email payload:", JSON.stringify(emailPayload, null, 2));
+        
+        const { data, error } = await resend.emails.send(emailPayload);
 
         if (error) {
-            console.error(" Resend API error:", error);
-            throw new Error(error.message);
+            console.error("💥 Resend API error:", error);
+            console.error("🔍 Error type:", typeof error);
+            console.error("🔍 Error details:", JSON.stringify(error, null, 2));
+            throw new Error(error.message || JSON.stringify(error));
         }
 
-        console.log(` Verification email sent successfully to ${email}`);
-        console.log(" Email data:", data);
+        console.log(`✅ Verification email sent successfully to ${email}`);
+        console.log("📊 Email data:", data);
         
     } catch (error) {
-        console.error(` Error sending verification email to ${email}:`, error);
-        console.error(" Error details:", {
+        console.error(`💥 Error sending verification email to ${email}:`, error);
+        console.error("📍 Error details:", {
             message: error.message,
-            name: error.name
+            name: error.name,
+            stack: error.stack
         });
         throw new Error(`Error sending verification email: ${error.message}`);
     }
