@@ -6,9 +6,11 @@ dotenv.config();
 // Debug environment variables
 console.log("SendGrid Configuration:");
 console.log("SENDGRID_API_KEY:", process.env.SENDGRID_API_KEY ? "Set" : "Missing");
+console.log("SENDER_EMAIL:", process.env.SENDER_EMAIL || "Using fallback");
+console.log("SENDER_NAME:", process.env.SENDER_NAME || "Using fallback");
 
 if (!process.env.SENDGRID_API_KEY) {
-    console.error("⚠️ Warning: SENDGRID_API_KEY is missing!");
+    console.error("Warning: SENDGRID_API_KEY is missing!");
     console.error("Please set SENDGRID_API_KEY in environment variables");
 } else {
     // Set API key
@@ -16,7 +18,7 @@ if (!process.env.SENDGRID_API_KEY) {
     console.log("✅ SendGrid API key configured successfully");
 }
 
-export const SENDER_EMAIL = "nguyennhatleha@gmail.com"; // Must match verified sender
-export const SENDER_NAME = "Penny Milk Tea";
+export const SENDER_EMAIL = "nguyennhatleha@gmail.com"; // Hardcoded for testing
+export const SENDER_NAME = "Penny Milk Tea"; // Hardcoded for testing
 
 export default sgMail;

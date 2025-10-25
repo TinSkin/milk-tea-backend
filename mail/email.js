@@ -1,11 +1,11 @@
 import { VERIFICATION_EMAIL_TEMPLATE, VERIFICATION_LINK_EMAIL_TEMPLATE, WELCOME_EMAIL_TEMPLATE, PASSWORD_RESET_REQUEST_TEMPLATE, PASSWORD_RESET_SUCCESS_TEMPLATE } from "./emailTemplates.js";
- import { sendMail, sender } from "./nodemailer.config.js";
+import { sendMail, sender } from "./nodemailer.config.js";
 
 //! Function to send verification OTP
 export const sendVerificationOTP = async (email, verificationCode) => {
     console.log("sendVerificationOTP called for:", email);
     console.log("Verification code:", verificationCode);
-    
+
     const recipient = [{ email }];
 
     try {
