@@ -80,7 +80,7 @@ export const checkOTP = async (req, res) => {
         // Tìm người dùng theo ID
         const user = await User.findById(userId);
         if (!user) {
-            return res.status(400).json({ success: false, message: "Unauthorized" });
+            return res.status(404).json({ success: false, message: "User not found" });
         }
 
         // Nếu người dùng đã được xác thực
@@ -663,7 +663,10 @@ export const googleAuth = async (req, res) => {
             user.isVerified = false;
             await user.save();
 
-            console.log(`Google login requires verification for ${email} — deferring token/email send to user's choice.`);
+            // Set temporary session for verification process
+            generateTokenAndSetCookie(res, user._id, false);
+
+            console.log(`Google login requires verification for ${email} — temporary session created.`);
 
             return res.status(200).json({
                 success: true,
