@@ -347,7 +347,7 @@ export const resendVerificationEmail = async (req, res) => {
         user.verificationTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
 
-        const base = process.env.NODE_ENV === 'devlopment'
+        const base = process.env.NODE_ENV === 'development'
             ? process.env.CLIENT_URL_PROD
             : process.env.CLIENT_URL_DEV;
         console.log("Base URL for verification link:", base);
