@@ -30,10 +30,10 @@ dotenv.config()
 console.log("🔧 Backend Environment Debug:");
 console.log("   NODE_ENV:", process.env.NODE_ENV);
 console.log("   PORT:", process.env.PORT);
-console.log("   MONGO_URI:", process.env.MONGO_URI ? "✅ Set" : "❌ Missing");
-console.log("   JWT_SECRET:", process.env.JWT_SECRET ? "✅ Set" : "❌ Missing");
-console.log("   GMAIL_USER:", process.env.GMAIL_USER ? "✅ Set" : "❌ Missing");
-console.log("   GMAIL_PASS:", process.env.GMAIL_PASS ? "✅ Set" : "❌ Missing");
+console.log("   MONGO_URI:", process.env.MONGO_URI ? " Set" : " Missing");
+console.log("   JWT_SECRET:", process.env.JWT_SECRET ? " Set" : " Missing");
+console.log("   GMAIL_USER:", process.env.GMAIL_USER ? " Set" : " Missing");
+console.log("   GMAIL_PASS:", process.env.GMAIL_PASS ? " Set" : " Missing");
 console.log("   CLIENT_URL_DEV:", process.env.CLIENT_URL_DEV);
 console.log("   CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
 
@@ -42,6 +42,7 @@ const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PO
 
 //! Cấu hình CORS 
 app.use(cors({
+    // origin: "http://localhost:5173",
     origin: process.env.CLIENT_URL_PROD,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
@@ -80,22 +81,6 @@ app.use("/api/admin/requests", requestAdminRoutes);
 app.use("/api", addressRoutes);
 app.use("/api", geocodeRoutes);
 app.use("/api", autocompleteRoutes);
-
-//! Global error handling middleware
-app.use((error, req, res, next) => {
-    console.error("💥 Global Error Handler:");
-    console.error("   Error:", error.message);
-    console.error("   Stack:", error.stack);
-    console.error("   Request:", req.method, req.path);
-    console.error("   Body:", req.body);
-
-    res.status(500).json({
-        success: false,
-        message: "Internal Server Error",
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
-    });
-});
-
 
 app.listen(PORT, () => {
     //! Hàm kết nối MongoDB

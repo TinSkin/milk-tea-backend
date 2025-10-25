@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from 'google-auth-library';
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
 
-import { sendVerificationOTP, sendVerificationLinkEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mail/email.js";
+import { sendVerificationOTP, sendVerificationLinkEmail, sendWelcomeEmail, sendPasswordResetEmail, sendResetSuccessEmail } from "../mail/resend/resend.email.js";
 import { shouldVerifyGoogleUser, getVerificationReason } from "../utils/verificationRules.js";
 
 import User from "../models/User.model.js";
