@@ -36,15 +36,12 @@ const calculateTotal = async (cart) => {
 
 // ==========================================================
 // 🔸 Hàm so sánh toppings (bỏ qua thứ tự)
-const compareToppings = (a, b) => {
-  if (!a) a = [];
-  if (!b) b = [];
+
+const compareToppings = (a = [], b = []) => {
   if (a.length !== b.length) return false;
-
-  const sortedA = a.map((t) => t.toString()).sort();
-  const sortedB = b.map((t) => t.toString()).sort();
-
-  return sortedA.join(",") === sortedB.join(",");
+  const idsA = a.map(t => String(t.toppingId || t._id || t)).sort();
+  const idsB = b.map(t => String(t.toppingId || t._id || t)).sort();
+  return idsA.join(',') === idsB.join(',');
 };
 
 
@@ -72,7 +69,18 @@ export const getCart = async (req, res) => {
     cart.totalAmount = await calculateTotal(cart);
     await cart.save();
 
-    res.status(200).json({ success: true, data: cart });
+// ✅ Lấy toàn bộ danh sách topping đang hoạt động
+const allToppings = await Topping.find({ status: "active" }).select("name extraPrice");
+
+// ✅ Thêm availableToppings vào từng item
+const cartData = cart.toObject();
+cartData.items = cartData.items.map((item) => ({
+  ...item,
+  availableToppings: allToppings,
+}));
+
+res.status(200).json({ success: true, data: cartData });
+
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -246,7 +254,6 @@ export const updateQuantity = async (req, res) => {
 };
 
 // ==========================================================
-// ✏️ Cập nhật cấu hình sản phẩm
 export const updateCartItem = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -261,20 +268,91 @@ export const updateCartItem = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Không tìm thấy giỏ hàng." });
 
-    const item = cart.items.id(itemId);
-    if (!item)
+    const itemToUpdate = cart.items.id(itemId);
+    if (!itemToUpdate)
       return res
         .status(404)
         .json({ success: false, message: "Không tìm thấy sản phẩm trong giỏ hàng." });
 
-    if (newConfig.toppings) item.toppings = newConfig.toppings;
-    if (newConfig.specialNotes) item.specialNotes = newConfig.specialNotes;
-    if (newConfig.sizeOption) item.sizeOption = newConfig.sizeOption;
-    if (newConfig.sugarLevel) item.sugarLevel = newConfig.sugarLevel;
-    if (newConfig.iceOption) item.iceOption = newConfig.iceOption;
+    const product = await Product.findById(itemToUpdate.productId);
+    if (!product)
+      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin sản phẩm." });
 
+    // Cấu hình mới
+    const newSize = newConfig.sizeOption || itemToUpdate.sizeOption;
+    const newSugar = newConfig.sugarLevel || itemToUpdate.sugarLevel;
+    const newIce = newConfig.iceOption || itemToUpdate.iceOption;
+    const newNote = newConfig.specialNotes || itemToUpdate.specialNotes;
+    const newQuantity = newConfig.quantity ?? itemToUpdate.quantity;
+
+    // Lấy topping mới (nếu có)
+    let newToppings = itemToUpdate.toppings;
+    if (newConfig.toppings && Array.isArray(newConfig.toppings)) {
+      const toppingIds = newConfig.toppings.map(t =>
+        typeof t === "object" ? (t.toppingId || t._id) : t
+      ).filter(Boolean);
+
+      const toppingDocs = await Topping.find({ _id: { $in: toppingIds } });
+      newToppings = toppingDocs.map(t => ({
+        toppingId: t._id,
+        name: t.name,
+        extraPrice: t.extraPrice || 0,
+      }));
+    }
+
+    // Tính giá mới
+    const sizeOptionObj = product.sizeOptions?.find(s => s.size === newSize);
+    const sizePrice = sizeOptionObj?.price ?? product.price ?? 0;
+    const toppingTotal = newToppings.reduce((sum, t) => sum + (t.extraPrice || 0), 0);
+    const unitPrice = sizePrice + toppingTotal;
+
+    // Hàm so sánh topping (fix)
+    const compareToppings = (a = [], b = []) => {
+      if (a.length !== b.length) return false;
+      const idsA = a.map(t => String(t.toppingId || t._id || t)).sort();
+      const idsB = b.map(t => String(t.toppingId || t._id || t)).sort();
+      return idsA.join(',') === idsB.join(',');
+    };
+
+    // Tìm item khác có cùng cấu hình mới
+    const existingIndex = cart.items.findIndex(item =>
+      item._id.toString() !== itemId &&
+      item.productId.toString() === itemToUpdate.productId.toString() &&
+      item.sizeOption === newSize &&
+      item.sugarLevel === newSugar &&
+      item.iceOption === newIce &&
+      compareToppings(item.toppings, newToppings) &&
+      item.specialNotes === newNote
+    );
+
+    if (existingIndex > -1) {
+      // GỘP: Cộng số lượng + cập nhật giá
+      const targetItem = cart.items[existingIndex];
+      targetItem.quantity += newQuantity;
+      targetItem.sizeOptionPrice = sizePrice;
+      targetItem.price = unitPrice * targetItem.quantity;
+
+      // XÓA item cũ
+      cart.items = cart.items.filter(i => i._id.toString() !== itemId);
+    } else {
+      // CẬP NHẬT item hiện tại
+      itemToUpdate.sizeOption = newSize;
+      itemToUpdate.sugarLevel = newSugar;
+      itemToUpdate.iceOption = newIce;
+      itemToUpdate.specialNotes = newNote;
+      itemToUpdate.toppings = newToppings;
+      itemToUpdate.quantity = newQuantity;
+      itemToUpdate.sizeOptionPrice = sizePrice;
+      itemToUpdate.price = unitPrice * newQuantity;
+    }
+
+    // Cập nhật tổng tiền giỏ hàng
     cart.totalAmount = await calculateTotal(cart);
     await cart.save();
+
+    // Populate dữ liệu
+    await cart.populate("items.productId", "name images sizeOptions price");
+    await cart.populate("items.toppings.toppingId", "name extraPrice status");
 
     res.status(200).json({
       success: true,
@@ -282,6 +360,7 @@ export const updateCartItem = async (req, res) => {
       data: cart,
     });
   } catch (error) {
+    console.error("Lỗi updateCartItem:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi khi cập nhật cấu hình sản phẩm: " + error.message,
