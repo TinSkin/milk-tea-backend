@@ -347,7 +347,7 @@ export const resendVerificationEmail = async (req, res) => {
         user.verificationTokenExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
         await user.save();
 
-        const base = process.env.NODE_ENV === 'production'
+        const base = process.env.NODE_ENV === 'devlopment'
             ? process.env.CLIENT_URL_PROD
             : process.env.CLIENT_URL_DEV;
         const verifyLink = `${base}/verify-email?token=${encodeURIComponent(verificationToken)}`;
@@ -490,7 +490,7 @@ export const forgotPassword = async (req, res) => {
             await user.save();
 
             // Gửi email
-            const base = process.env.NODE_ENV === 'production'
+            const base = process.env.NODE_ENV === 'development'
                 ? process.env.CLIENT_URL_PROD
                 : process.env.CLIENT_URL_DEV;
             const resetLink = `${base}/reset-password/${resetToken}`;

@@ -5,10 +5,10 @@ import { VERIFICATION_EMAIL_TEMPLATE, VERIFICATION_LINK_EMAIL_TEMPLATE, WELCOME_
 export const sendVerificationOTP = async (email, verificationCode) => {
     console.log("SendGrid: sendVerificationOTP called for:", email);
     console.log("Verification code:", verificationCode);
-    
+
     try {
-        console.log("🔄 Attempting to send email via SendGrid...");
-        
+        console.log(" Attempting to send email via SendGrid...");
+
         const msg = {
             to: email,
             from: {
@@ -20,25 +20,25 @@ export const sendVerificationOTP = async (email, verificationCode) => {
         };
 
         const result = await sgMail.send(msg);
-        
-        console.log(`✅ Verification email sent successfully to ${email}`);
+
+        console.log(` Verification email sent successfully to ${email}`);
         console.log("SendGrid Message ID:", result[0].headers['x-message-id']);
         console.log("SendGrid Response:", {
             statusCode: result[0].statusCode,
             headers: result[0].headers
         });
-        
+
         return result;
     } catch (error) {
-        console.error(`❌ Error sending verification email to ${email}:`, error.message);
-        
+        console.error(` Error sending verification email to ${email}:`, error.message);
+
         if (error.response) {
             console.error("SendGrid Error Details:", {
                 statusCode: error.response.statusCode,
                 body: error.response.body
             });
         }
-        
+
         throw error;
     }
 };
@@ -47,7 +47,7 @@ export const sendVerificationOTP = async (email, verificationCode) => {
 export const sendVerificationLinkEmail = async (email, verifyLink) => {
     console.log("SendGrid: sendVerificationLinkEmail called for:", email);
     console.log("Verify link:", verifyLink);
-    
+
     try {
         const msg = {
             to: email,
@@ -60,11 +60,11 @@ export const sendVerificationLinkEmail = async (email, verifyLink) => {
         };
 
         const result = await sgMail.send(msg);
-        console.log(`✅ Verification link email sent successfully to ${email}`);
+        console.log(`Verification link email sent successfully to ${email}`);
         console.log("SendGrid Message ID:", result[0].headers['x-message-id']);
         return result;
     } catch (error) {
-        console.error(`❌ Error sending verification link email to ${email}:`, error.message);
+        console.error(`Error sending verification link email to ${email}:`, error.message);
         throw error;
     }
 };
@@ -72,7 +72,7 @@ export const sendVerificationLinkEmail = async (email, verifyLink) => {
 //! Hàm gửi email chào mừng qua SendGrid
 export const sendWelcomeEmail = async (email, name) => {
     console.log("SendGrid: sendWelcomeEmail called for:", email);
-    
+
     try {
         const msg = {
             to: email,
@@ -85,10 +85,10 @@ export const sendWelcomeEmail = async (email, name) => {
         };
 
         const result = await sgMail.send(msg);
-        console.log(`✅ Welcome email sent successfully to ${email}`);
+        console.log(` Welcome email sent successfully to ${email}`);
         return result;
     } catch (error) {
-        console.error(`❌ Error sending welcome email to ${email}:`, error.message);
+        console.error(` Error sending welcome email to ${email}:`, error.message);
         throw error;
     }
 };
@@ -96,7 +96,7 @@ export const sendWelcomeEmail = async (email, name) => {
 //! Hàm gửi email đặt lại mật khẩu qua SendGrid
 export const sendPasswordResetEmail = async (email, resetURL) => {
     console.log("SendGrid: sendPasswordResetEmail called for:", email);
-    
+
     try {
         const msg = {
             to: email,
@@ -109,10 +109,10 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
         };
 
         const result = await sgMail.send(msg);
-        console.log(`✅ Password reset email sent successfully to ${email}`);
+        console.log(`Password reset email sent successfully to ${email}`);
         return result;
     } catch (error) {
-        console.error(`❌ Error sending password reset email to ${email}:`, error.message);
+        console.error(`Error sending password reset email to ${email}:`, error.message);
         throw error;
     }
 };
@@ -120,7 +120,7 @@ export const sendPasswordResetEmail = async (email, resetURL) => {
 //! Hàm gửi email thông báo đặt lại mật khẩu thành công qua SendGrid
 export const sendResetSuccessEmail = async (email) => {
     console.log("SendGrid: sendResetSuccessEmail called for:", email);
-    
+
     try {
         const msg = {
             to: email,
@@ -133,10 +133,10 @@ export const sendResetSuccessEmail = async (email) => {
         };
 
         const result = await sgMail.send(msg);
-        console.log(`✅ Reset success email sent successfully to ${email}`);
+        console.log(`Reset success email sent successfully to ${email}`);
         return result;
     } catch (error) {
-        console.error(`❌ Error sending reset success email to ${email}:`, error.message);
+        console.error(`Error sending reset success email to ${email}:`, error.message);
         throw error;
     }
 };
