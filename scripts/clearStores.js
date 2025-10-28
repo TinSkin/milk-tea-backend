@@ -14,7 +14,7 @@ const clearStores = async () => {
         console.log(`📊 Hiện tại có: ${countBefore} stores trong database`);
 
         if (countBefore === 0) {
-            console.log('✅ Collection Store đã trống rồi!');
+            console.log(' Collection Store đã trống rồi!');
             return;
         }
 
@@ -40,13 +40,13 @@ const clearStores = async () => {
         console.log(`📊 Còn lại: ${countAfter} stores`);
 
         if (countAfter === 0) {
-            console.log('✅ Collection Store đã được clear hoàn toàn!');
+            console.log(' Collection Store đã được clear hoàn toàn!');
         } else {
             console.log('⚠️  Vẫn còn stores chưa được xóa!');
         }
 
     } catch (error) {
-        console.error('❌ Lỗi khi clear stores:', error);
+        console.error(' Lỗi khi clear stores:', error);
     } finally {
         await mongoose.connection.close();
         console.log('🔌 Đã đóng kết nối MongoDB');

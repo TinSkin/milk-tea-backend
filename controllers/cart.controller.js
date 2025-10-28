@@ -3,7 +3,7 @@ import Product from "../models/Product.model.js";
 import Topping from "../models/Topping.model.js";
 
 // ==========================================================
-// 🔹 Hàm tính tổng tiền giỏ hàng (chuẩn, hỗ trợ size + topping)
+//  Hàm tính tổng tiền giỏ hàng (chuẩn, hỗ trợ size + topping)
 const calculateTotal = async (cart) => {
   let total = 0;
 
@@ -11,20 +11,20 @@ const calculateTotal = async (cart) => {
     const product = await Product.findById(item.productId);
     if (!product) continue;
 
-    // ✅ Lấy giá theo sizeOption
+    //  Lấy giá theo sizeOption
     const sizeOptionObj = product.sizeOptions?.find(
       (s) => s.size === (item.sizeOption || "M")
     );
     const sizePrice = sizeOptionObj?.price ?? product.price ?? 0;
 
-    // ✅ Tính tổng topping
+    //  Tính tổng topping
     let toppingTotal = 0;
     if (item.toppings && item.toppings.length > 0) {
       for (const t of item.toppings) {
         const topping = await Topping.findById(t.toppingId || t);
         if (topping) toppingTotal += Number(topping.extraPrice) || 0;
       }
-    }    
+    }
 
     const quantity = Number(item.quantity) || 1;
     const itemTotal = (sizePrice + toppingTotal) * quantity;
@@ -35,25 +35,26 @@ const calculateTotal = async (cart) => {
 };
 
 // ==========================================================
-// 🔸 Hàm so sánh toppings (bỏ qua thứ tự)
+//  Hàm so sánh toppings (bỏ qua thứ tự)
 
 const compareToppings = (a = [], b = []) => {
   if (a.length !== b.length) return false;
-  const idsA = a.map(t => String(t.toppingId || t._id || t)).sort();
-  const idsB = b.map(t => String(t.toppingId || t._id || t)).sort();
-  return idsA.join(',') === idsB.join(',');
+  const idsA = a.map((t) => String(t.toppingId || t._id || t)).sort();
+  const idsB = b.map((t) => String(t.toppingId || t._id || t)).sort();
+  return idsA.join(",") === idsB.join(",");
 };
 
-
 // ==========================================================
-// 🛒 Lấy giỏ hàng
+//  Lấy giỏ hàng
 export const getCart = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
     const { storeId } = req.query;
 
     if (!storeId)
-      return res.status(400).json({ success: false, message: "Thiếu storeId." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu storeId." });
 
     let cart = await Cart.findOne({ userId, storeId, status: "active" })
       .populate("items.productId", "name images sizeOptions price category")
@@ -65,22 +66,23 @@ export const getCart = async (req, res) => {
         .json({ success: true, data: { items: [], totalAmount: 0 } });
     }
 
-    // ✅ Cập nhật lại tổng tiền (nếu chưa có hoặc sai)
+    //  Cập nhật lại tổng tiền (nếu chưa có hoặc sai)
     cart.totalAmount = await calculateTotal(cart);
     await cart.save();
 
-// ✅ Lấy toàn bộ danh sách topping đang hoạt động
-const allToppings = await Topping.find({ status: "active" }).select("name extraPrice");
+    //  Lấy toàn bộ danh sách topping đang hoạt động
+    const allToppings = await Topping.find({ status: "active" }).select(
+      "name extraPrice"
+    );
 
-// ✅ Thêm availableToppings vào từng item
-const cartData = cart.toObject();
-cartData.items = cartData.items.map((item) => ({
-  ...item,
-  availableToppings: allToppings,
-}));
+    //  Thêm availableToppings vào từng item
+    const cartData = cart.toObject();
+    cartData.items = cartData.items.map((item) => ({
+      ...item,
+      availableToppings: allToppings,
+    }));
 
-res.status(200).json({ success: true, data: cartData });
-
+    res.status(200).json({ success: true, data: cartData });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -90,7 +92,7 @@ res.status(200).json({ success: true, data: cartData });
 };
 
 // ==========================================================
-// ➕ Thêm sản phẩm vào giỏ
+//  Thêm sản phẩm vào giỏ
 export const addToCart = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -116,56 +118,54 @@ export const addToCart = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Không tìm thấy sản phẩm." });
 
-    // 🔹 Tính giá sizeOption
+    //  Tính giá sizeOption
     const sizeOptionObj = product.sizeOptions?.find(
       (s) => s.size === (sizeOption || "M")
     );
     const sizeOptionPrice = sizeOptionObj?.price ?? product.price ?? 0;
 
-// 🔹 Lấy danh sách topping từ DB dựa trên ID
-let toppingList = [];
-let toppingTotal = 0;
+    //  Lấy danh sách topping từ DB dựa trên ID
+    let toppingList = [];
+    let toppingTotal = 0;
 
-if (toppings && toppings.length > 0) {
-  const toppingIds = toppings.map((t) =>
-    typeof t === "object" ? t.toppingId : t
-  );
+    if (toppings && toppings.length > 0) {
+      const toppingIds = toppings.map((t) =>
+        typeof t === "object" ? t.toppingId : t
+      );
 
-  const toppingDocs = await Topping.find({ _id: { $in: toppingIds } });
+      const toppingDocs = await Topping.find({ _id: { $in: toppingIds } });
 
-  if (toppingDocs.length !== toppingIds.length) {
-    return res.status(400).json({
-      success: false,
-      message: "Một hoặc nhiều topping không tồn tại.",
-    });
-  }
+      if (toppingDocs.length !== toppingIds.length) {
+        return res.status(400).json({
+          success: false,
+          message: "Một hoặc nhiều topping không tồn tại.",
+        });
+      }
 
-  // Lưu toppingId vào cart, không lưu giá
-  toppingList = toppingDocs.map((t) => ({ 
-    toppingId: t._id,
-    name: t.name,
-    extraPrice: t.extraPrice
-  }));
+      // Lưu toppingId vào cart, không lưu giá
+      toppingList = toppingDocs.map((t) => ({
+        toppingId: t._id,
+        name: t.name,
+        extraPrice: t.extraPrice,
+      }));
 
-  // Tính tổng tiền topping
-  toppingTotal = toppingDocs.reduce(
-    (sum, t) => sum + (t.extraPrice || 0),
-    0
-  );
-}
+      // Tính tổng tiền topping
+      toppingTotal = toppingDocs.reduce(
+        (sum, t) => sum + (t.extraPrice || 0),
+        0
+      );
+    }
 
-
-
-    // 🔹 Tổng giá 1 item
+    //  Tổng giá 1 item
     const totalItemPrice = (sizeOptionPrice + toppingTotal) * quantity;
 
-    // 🔹 Lấy giỏ hàng của user
+    //  Lấy giỏ hàng của user
     let cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart) {
       cart = new Cart({ userId, storeId, items: [], totalAmount: 0 });
     }
 
-    // 🔹 Kiểm tra item trùng
+    //  Kiểm tra item trùng
     const existingIndex = cart.items.findIndex(
       (item) =>
         item.productId.toString() === productId &&
@@ -192,13 +192,13 @@ if (toppings && toppings.length > 0) {
       });
     }
 
-    // 🔹 Cập nhật tổng tiền giỏ hàng
+    //  Cập nhật tổng tiền giỏ hàng
     cart.totalAmount = await calculateTotal(cart);
     await cart.save();
 
     await cart.populate("items.productId", "name images sizeOptions price");
     await cart.populate("items.toppings.toppingId", "name extraPrice status");
-    
+
     res.status(200).json({
       success: true,
       message: "Đã thêm sản phẩm vào giỏ hàng.",
@@ -213,7 +213,7 @@ if (toppings && toppings.length > 0) {
 };
 
 // ==========================================================
-// 🔢 Cập nhật số lượng
+//  Cập nhật số lượng
 export const updateQuantity = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
@@ -222,7 +222,10 @@ export const updateQuantity = async (req, res) => {
     if (!storeId || !itemId || quantity === undefined)
       return res
         .status(400)
-        .json({ success: false, message: "Thiếu storeId, itemId hoặc quantity." });
+        .json({
+          success: false,
+          message: "Thiếu storeId, itemId hoặc quantity.",
+        });
 
     const cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart)
@@ -234,7 +237,10 @@ export const updateQuantity = async (req, res) => {
     if (!item)
       return res
         .status(404)
-        .json({ success: false, message: "Không tìm thấy sản phẩm trong giỏ hàng." });
+        .json({
+          success: false,
+          message: "Không tìm thấy sản phẩm trong giỏ hàng.",
+        });
 
     item.quantity = quantity;
     cart.totalAmount = await calculateTotal(cart);
@@ -260,7 +266,9 @@ export const updateCartItem = async (req, res) => {
     const { itemId, newConfig, storeId } = req.body;
 
     if (!storeId)
-      return res.status(400).json({ success: false, message: "Thiếu storeId." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu storeId." });
 
     const cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart)
@@ -272,11 +280,19 @@ export const updateCartItem = async (req, res) => {
     if (!itemToUpdate)
       return res
         .status(404)
-        .json({ success: false, message: "Không tìm thấy sản phẩm trong giỏ hàng." });
+        .json({
+          success: false,
+          message: "Không tìm thấy sản phẩm trong giỏ hàng.",
+        });
 
     const product = await Product.findById(itemToUpdate.productId);
     if (!product)
-      return res.status(404).json({ success: false, message: "Không tìm thấy thông tin sản phẩm." });
+      return res
+        .status(404)
+        .json({
+          success: false,
+          message: "Không tìm thấy thông tin sản phẩm.",
+        });
 
     // Cấu hình mới
     const newSize = newConfig.sizeOption || itemToUpdate.sizeOption;
@@ -288,12 +304,12 @@ export const updateCartItem = async (req, res) => {
     // Lấy topping mới (nếu có)
     let newToppings = itemToUpdate.toppings;
     if (newConfig.toppings && Array.isArray(newConfig.toppings)) {
-      const toppingIds = newConfig.toppings.map(t =>
-        typeof t === "object" ? (t.toppingId || t._id) : t
-      ).filter(Boolean);
+      const toppingIds = newConfig.toppings
+        .map((t) => (typeof t === "object" ? t.toppingId || t._id : t))
+        .filter(Boolean);
 
       const toppingDocs = await Topping.find({ _id: { $in: toppingIds } });
-      newToppings = toppingDocs.map(t => ({
+      newToppings = toppingDocs.map((t) => ({
         toppingId: t._id,
         name: t.name,
         extraPrice: t.extraPrice || 0,
@@ -301,28 +317,32 @@ export const updateCartItem = async (req, res) => {
     }
 
     // Tính giá mới
-    const sizeOptionObj = product.sizeOptions?.find(s => s.size === newSize);
+    const sizeOptionObj = product.sizeOptions?.find((s) => s.size === newSize);
     const sizePrice = sizeOptionObj?.price ?? product.price ?? 0;
-    const toppingTotal = newToppings.reduce((sum, t) => sum + (t.extraPrice || 0), 0);
+    const toppingTotal = newToppings.reduce(
+      (sum, t) => sum + (t.extraPrice || 0),
+      0
+    );
     const unitPrice = sizePrice + toppingTotal;
 
     // Hàm so sánh topping (fix)
     const compareToppings = (a = [], b = []) => {
       if (a.length !== b.length) return false;
-      const idsA = a.map(t => String(t.toppingId || t._id || t)).sort();
-      const idsB = b.map(t => String(t.toppingId || t._id || t)).sort();
-      return idsA.join(',') === idsB.join(',');
+      const idsA = a.map((t) => String(t.toppingId || t._id || t)).sort();
+      const idsB = b.map((t) => String(t.toppingId || t._id || t)).sort();
+      return idsA.join(",") === idsB.join(",");
     };
 
     // Tìm item khác có cùng cấu hình mới
-    const existingIndex = cart.items.findIndex(item =>
-      item._id.toString() !== itemId &&
-      item.productId.toString() === itemToUpdate.productId.toString() &&
-      item.sizeOption === newSize &&
-      item.sugarLevel === newSugar &&
-      item.iceOption === newIce &&
-      compareToppings(item.toppings, newToppings) &&
-      item.specialNotes === newNote
+    const existingIndex = cart.items.findIndex(
+      (item) =>
+        item._id.toString() !== itemId &&
+        item.productId.toString() === itemToUpdate.productId.toString() &&
+        item.sizeOption === newSize &&
+        item.sugarLevel === newSugar &&
+        item.iceOption === newIce &&
+        compareToppings(item.toppings, newToppings) &&
+        item.specialNotes === newNote
     );
 
     if (existingIndex > -1) {
@@ -333,7 +353,7 @@ export const updateCartItem = async (req, res) => {
       targetItem.price = unitPrice * targetItem.quantity;
 
       // XÓA item cũ
-      cart.items = cart.items.filter(i => i._id.toString() !== itemId);
+      cart.items = cart.items.filter((i) => i._id.toString() !== itemId);
     } else {
       // CẬP NHẬT item hiện tại
       itemToUpdate.sizeOption = newSize;
@@ -369,14 +389,16 @@ export const updateCartItem = async (req, res) => {
 };
 
 // ==========================================================
-// ♻️ Gom sản phẩm trùng
+// Gom sản phẩm trùng
 export const mergeDuplicateItems = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
     const { storeId } = req.body;
 
     if (!storeId)
-      return res.status(400).json({ success: false, message: "Thiếu storeId." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu storeId." });
 
     const cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart)
@@ -418,14 +440,16 @@ export const mergeDuplicateItems = async (req, res) => {
 };
 
 // ==========================================================
-// ❌ Xóa 1 sản phẩm
+//  Xóa 1 sản phẩm
 export const removeFromCart = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
     const { itemId, storeId } = req.body;
 
     if (!storeId)
-      return res.status(400).json({ success: false, message: "Thiếu storeId." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu storeId." });
 
     const cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart)
@@ -451,14 +475,16 @@ export const removeFromCart = async (req, res) => {
 };
 
 // ==========================================================
-// ❌ Xóa toàn bộ giỏ hàng
+//  Xóa toàn bộ giỏ hàng
 export const clearCart = async (req, res) => {
   try {
     const userId = req.userId || req.user?.id;
     const { storeId } = req.body;
 
     if (!storeId)
-      return res.status(400).json({ success: false, message: "Thiếu storeId." });
+      return res
+        .status(400)
+        .json({ success: false, message: "Thiếu storeId." });
 
     const cart = await Cart.findOne({ userId, storeId, status: "active" });
     if (!cart)

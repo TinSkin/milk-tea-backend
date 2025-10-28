@@ -7,10 +7,10 @@ import ExcelJS from 'exceljs';
 //! Lấy thống kê dashboard cho store manager
 export const getStoreDashboard = async (req, res) => {
   try {
-    console.log("✅ Dashboard API called successfully");
+    console.log(" Dashboard API called successfully");
     
     const managerId = req.user.userId || req.user._id;
-    console.log("🔄 Dashboard request from manager:", managerId);
+    console.log("Dashboard request from manager:", managerId);
 
     // Tìm cửa hàng của manager
     const store = await Store.findOne({ manager: managerId });
@@ -84,7 +84,7 @@ export const getStoreDashboard = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Error in dashboard API:", error);
+    console.error(" Error in dashboard API:", error);
     res.status(500).json({
       success: false,
       message: "Lỗi server khi lấy dữ liệu dashboard",
@@ -169,7 +169,7 @@ async function getOrderStats(storeId, startDate, endDate = new Date()) {
     return result;
 
   } catch (error) {
-    console.error("❌ Error in getOrderStats:", error);
+    console.error(" Error in getOrderStats:", error);
     return {
       total: 0,
       completed: 0,
@@ -183,7 +183,7 @@ async function getOrderStats(storeId, startDate, endDate = new Date()) {
 //! Hàm lấy thống kê doanh thu
 async function getRevenueStats(storeId, startDate, endDate = new Date()) {
   try {
-    console.log("💰 Getting revenue stats for store:", storeId);
+    console.log(" Getting revenue stats for store:", storeId);
     
     const matchStage = {
       storeId: storeId,
@@ -238,11 +238,11 @@ async function getRevenueStats(storeId, startDate, endDate = new Date()) {
       byPaymentMethod: byPaymentMethod
     };
 
-    console.log("💰 Revenue result:", result);
+    console.log(" Revenue result:", result);
     return result;
 
   } catch (error) {
-    console.error("❌ Error in getRevenueStats:", error);
+    console.error(" Error in getRevenueStats:", error);
     return {
       total: 0,
       daily: [],
@@ -288,7 +288,7 @@ async function getCustomerStats(storeId, startDate, endDate = new Date()) {
     };
 
   } catch (error) {
-    console.error("❌ Error in getCustomerStats:", error);
+    console.error(" Error in getCustomerStats:", error);
     return {
       newCustomers: 0,
       returningCustomers: 0
@@ -299,7 +299,7 @@ async function getCustomerStats(storeId, startDate, endDate = new Date()) {
 //! Hàm lấy thống kê sản phẩm
 async function getProductStats(storeId, startDate, endDate = new Date()) {
   try {
-    console.log("📦 Getting product stats for store:", storeId);
+    console.log(" Getting product stats for store:", storeId);
     
     const productStats = await Order.aggregate([
       {
@@ -321,7 +321,7 @@ async function getProductStats(storeId, startDate, endDate = new Date()) {
       { $limit: 10 }
     ]);
 
-    console.log("📦 Raw product stats:", productStats);
+    console.log(" Raw product stats:", productStats);
 
     // Populate product info
     const topProducts = await Promise.all(
@@ -338,7 +338,7 @@ async function getProductStats(storeId, startDate, endDate = new Date()) {
             revenue: stat.totalRevenue
           };
         } catch (error) {
-          console.error("❌ Error populating product:", stat._id, error);
+          console.error(" Error populating product:", stat._id, error);
           return {
             _id: stat._id,
             name: "Sản phẩm không xác định",
@@ -359,11 +359,11 @@ async function getProductStats(storeId, startDate, endDate = new Date()) {
       topProducts
     };
 
-    console.log("📦 Final product stats:", result);
+    console.log(" Final product stats:", result);
     return result;
 
   } catch (error) {
-    console.error("❌ Error in getProductStats:", error);
+    console.error(" Error in getProductStats:", error);
     return {
       totalSold: 0,
       topProducts: []
@@ -393,7 +393,7 @@ async function getRecentOrders(storeId, limit = 10) {
       type: "order"
     }));
   } catch (error) {
-    console.error("❌ Error in getRecentOrders:", error);
+    console.error(" Error in getRecentOrders:", error);
     return [];
   }
 }
@@ -471,7 +471,7 @@ export const exportDashboardReport = async (req, res) => {
       res.end();
   
     } catch (error) {
-      console.error("❌ Error exporting dashboard report:", error);
+      console.error(" Error exporting dashboard report:", error);
       res.status(500).json({
         success: false,
         message: "Lỗi server khi xuất báo cáo",

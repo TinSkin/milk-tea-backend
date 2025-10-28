@@ -35,16 +35,16 @@ export const getStoreProducts = async (req, res) => {
             });
         }
 
-        console.log("🔍 Store found:", store.storeName);
-        console.log("🔍 Store products count:", store.products.length);
-        console.log("🔍 Store products structure:", store.products[0]);
+        console.log(" Store found:", store.storeName);
+        console.log(" Store products count:", store.products.length);
+        console.log(" Store products structure:", store.products[0]);
 
         // Lấy danh sách productId từ store.products và chỉ những sản phẩm có storeStatus available
         const availableStoreProducts = store.products.filter(p => p.storeStatus === 'available');
         const productIds = availableStoreProducts.map(p => p.productId);
 
-        console.log("🔍 Available store products:", availableStoreProducts.length);
-        console.log("🔍 Product IDs to query:", productIds);
+        console.log(" Available store products:", availableStoreProducts.length);
+        console.log(" Product IDs to query:", productIds);
 
         // Tạo điều kiện lọc cho sản phẩm
         let filter = {};
@@ -70,11 +70,11 @@ export const getStoreProducts = async (req, res) => {
         const sort = {};
         sort[sortBy] = sortOrder;
 
-        console.log("🔍 Filter used for products:", filter);
+        console.log(" Filter used for products:", filter);
 
         // Đếm tổng số sản phẩm và lấy danh sách sản phẩm với phân trang
         const totalProducts = await Product.countDocuments(filter);
-        console.log("🔍 Total products found:", totalProducts);
+        console.log(" Total products found:", totalProducts);
 
         const products = await Product.find(filter)
             .populate('category', 'name slug')
@@ -84,8 +84,8 @@ export const getStoreProducts = async (req, res) => {
             .limit(limit)
             .select('name price category images description status sizeOptions toppings createdAt');
 
-        console.log("🔍 Products returned:", products.length);
-        console.log("🔍 First product:", products[0]?.name || "No products");
+        console.log(" Products returned:", products.length);
+        console.log(" First product:", products[0]?.name || "No products");
 
         // Kết hợp thông tin Product với thông tin Store-specific
         const productsWithStoreInfo = products.map(product => {
@@ -104,7 +104,7 @@ export const getStoreProducts = async (req, res) => {
             };
         });
 
-        console.log("🔍 Products with store info:", productsWithStoreInfo.length);
+        console.log(" Products with store info:", productsWithStoreInfo.length);
 
         // Tính toán thông tin phân trang
         const totalPages = Math.ceil(totalProducts / limit);

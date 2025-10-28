@@ -15,7 +15,7 @@ if (!process.env.SENDGRID_API_KEY) {
 } else {
     // Set API key
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-    console.log("✅ SendGrid API key configured successfully");
+    console.log(" SendGrid API key configured successfully");
 }
 
 export const SENDER_EMAIL = "nguyennhatleha@gmail.com"; // Hardcoded for testing

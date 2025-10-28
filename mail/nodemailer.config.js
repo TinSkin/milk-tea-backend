@@ -46,16 +46,16 @@ function makeTransport({ port, secure }) {
 
 export async function sendMail(opts) {
   try {
-    console.log("🔄 Trying service: 'gmail' approach...");
+    console.log("Trying service: 'gmail' approach...");
     return await transporter.sendMail(opts);
   } catch (e) {
-    console.log("❌ Service 'gmail' failed:", e.message);
-    console.log("🔄 Fallback to manual port 587...");
+    console.log(" Service 'gmail' failed:", e.message);
+    console.log("Fallback to manual port 587...");
     try {
       return await makeTransport({ port: 587, secure: false }).sendMail(opts);
     } catch (e2) {
-      console.log("❌ Port 587 failed:", e2.message);
-      console.log("🔄 Final fallback to port 465...");
+      console.log(" Port 587 failed:", e2.message);
+      console.log("Final fallback to port 465...");
       return await makeTransport({ port: 465, secure: true }).sendMail(opts);
     }
   }
