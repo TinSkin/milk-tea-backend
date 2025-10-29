@@ -260,7 +260,13 @@ export const getOrders = async (req, res) => {
       }
       filter.storeId = new mongoose.Types.ObjectId(req.user.assignedStoreId);
     }
-    
+    else if (req.user.role === "admin") {
+      // Admin xem tất cả đơn hàng - không cần filter
+      // Có thể thêm filter theo store nếu cần
+      if (req.query.storeId && req.query.storeId !== "all") {
+        filter.storeId = new mongoose.Types.ObjectId(req.query.storeId);
+      }
+    }
 
     if (status && status !== "all") filter.status = status;
     if (paymentStatus && paymentStatus !== "all") filter.paymentStatus = paymentStatus;

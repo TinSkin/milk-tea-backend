@@ -8,7 +8,7 @@ export const sendVerificationOTP = async (email, verificationCode) => {
     console.log(" Email details:", { from: `${sender.name} <${sender.email}>`, to: email });
     
     try {
-        console.log("🚀 Attempting to send email via Resend...");
+        console.log(" Attempting to send email via Resend...");
         
         const emailPayload = {
             from: `${sender.name} <${sender.email}>`,
@@ -17,7 +17,7 @@ export const sendVerificationOTP = async (email, verificationCode) => {
             html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", verificationCode)
         };
         
-        console.log("📋 Email payload:", JSON.stringify(emailPayload, null, 2));
+        console.log(" Email payload:", JSON.stringify(emailPayload, null, 2));
         
         const { data, error } = await resend.emails.send(emailPayload);
 
