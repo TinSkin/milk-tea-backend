@@ -17,7 +17,7 @@ export const sendVerificationOTP = async (email, verificationCode) => {
             html: VERIFICATION_EMAIL_TEMPLATE.replace("{verificationToken}", verificationCode)
         });
 
-        console.log(`✅ Verification email sent successfully to ${email}:`, info.messageId);
+        console.log(` Verification email sent successfully to ${email}:`, info.messageId);
         console.log("Email info:", {
             messageId: info.messageId,
             response: info.response,

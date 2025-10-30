@@ -84,7 +84,7 @@ const cartSchema = new Schema(
   { timestamps: true }
 );
 
-// ✅ Tính tổng tiền trước khi lưu
+//  Tính tổng tiền trước khi lưu
 cartSchema.pre("save", function (next) {
   this.totalAmount = this.items.reduce((total, item) => {
     const toppingTotal = (item.toppings || []).reduce(

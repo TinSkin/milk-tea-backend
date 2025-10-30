@@ -155,7 +155,7 @@ export const getOrderDetail = async (req, res) => {
     const { orderId } = req.params;
     const managerId = req.user.userId || req.user._id;
 
-    console.log("🔍 Getting order detail for:", { orderId, managerId });
+    console.log(" Getting order detail for:", { orderId, managerId });
 
     // Tìm cửa hàng của manager
     const store = await Store.findOne({ manager: managerId });
@@ -233,7 +233,7 @@ export const updateOrderStatus = async (req, res) => {
       const { status, note = "" } = req.body;
       const managerId = req.user.userId || req.user._id;
   
-      console.log("🔄 Updating order status:", { orderId, status, managerId });
+      console.log("Updating order status:", { orderId, status, managerId });
   
       // Validate status
       const validStatuses = ["finding_driver", "picking_up", "delivering", "delivered", "cancelled"];
@@ -281,7 +281,7 @@ export const updateOrderStatus = async (req, res) => {
       // Lưu trạng thái cũ để kiểm tra
       const oldStatus = order.status;
   
-      // ✅ TẠO NOTE THÔNG MINH - KHÔNG ĐỂ HỆ THỐNG TỰ TẠO BẢN GHI
+      //  TẠO NOTE THÔNG MINH - KHÔNG ĐỂ HỆ THỐNG TỰ TẠO BẢN GHI
       let finalNote = note;
       if (!finalNote) {
         // Sử dụng note tiếng Việt thay vì để hệ thống tạo note tiếng Anh
@@ -310,7 +310,7 @@ export const updateOrderStatus = async (req, res) => {
         finalNote += " | Đã tự động xác nhận thanh toán COD";
       }
   
-      // ✅ CHỈ PUSH 1 BẢN GHI DUY NHẤT - KHÔNG CÓ BẢN GHI TỰ ĐỘNG
+      //  CHỈ PUSH 1 BẢN GHI DUY NHẤT - KHÔNG CÓ BẢN GHI TỰ ĐỘNG
       order.statusHistory.push({
         status: status,
         paymentStatus: order.paymentStatus,
@@ -351,7 +351,7 @@ export const updatePaymentStatus = async (req, res) => {
     const managerId = req.user.userId || req.user._id;
 
 
-    console.log("💰 Updating payment status:", { orderId, paymentStatus, managerId });
+    console.log(" Updating payment status:", { orderId, paymentStatus, managerId });
 
     // Validate payment status
     const validPaymentStatuses = ["pending", "paid", "failed", "refunded"];
@@ -434,7 +434,7 @@ export const cancelOrder = async (req, res) => {
     const managerId = req.user.userId || req.user._id;
 
 
-    console.log("❌ Canceling order:", { orderId, reason, managerId });
+    console.log(" Canceling order:", { orderId, reason, managerId });
 
     // Validate reason
     if (!reason || reason.trim() === "") {
@@ -559,7 +559,7 @@ export const getOrderStatusHistory = async (req, res) => {
         });
       }
   
-      // ✅ DEDUPLICATION MẠNH - LOẠI BỎ CÁC BẢN GHI HỆ THỐNG TỰ ĐỘNG
+      //  DEDUPLICATION MẠNH - LOẠI BỎ CÁC BẢN GHI HỆ THỐNG TỰ ĐỘNG
       const uniqueHistoryMap = new Map();
       
       order.statusHistory.forEach(history => {
@@ -646,7 +646,7 @@ export const cleanupOrderHistory = async (req, res) => {
           continue;
         }
   
-        // ✅ LOẠI BỎ BẢN GHI HỆ THỐNG TỰ ĐỘNG
+        //  LOẠI BỎ BẢN GHI HỆ THỐNG TỰ ĐỘNG
         const cleanedHistory = [];
         const seenKeys = new Set();
         

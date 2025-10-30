@@ -5,7 +5,7 @@ import { VERIFICATION_EMAIL_TEMPLATE, VERIFICATION_LINK_EMAIL_TEMPLATE, WELCOME_
 export const sendVerificationOTP = async (email, verificationCode) => {
     console.log("📧 sendVerificationOTP called for:", email);
     console.log("🔑 Verification code:", verificationCode);
-    console.log("📤 Email details:", { from: `${sender.name} <${sender.email}>`, to: email });
+    console.log(" Email details:", { from: `${sender.name} <${sender.email}>`, to: email });
     
     try {
         console.log("🚀 Attempting to send email via Resend...");
@@ -23,12 +23,12 @@ export const sendVerificationOTP = async (email, verificationCode) => {
 
         if (error) {
             console.error("💥 Resend API error:", error);
-            console.error("🔍 Error type:", typeof error);
-            console.error("🔍 Error details:", JSON.stringify(error, null, 2));
+            console.error(" Error type:", typeof error);
+            console.error(" Error details:", JSON.stringify(error, null, 2));
             throw new Error(error.message || JSON.stringify(error));
         }
 
-        console.log(`✅ Verification email sent successfully to ${email}`);
+        console.log(` Verification email sent successfully to ${email}`);
         console.log("📊 Email data:", data);
         
     } catch (error) {

@@ -264,7 +264,7 @@ const seedStores = async () => {
                 };
                 
                 const store = await Store.create(finalStoreData);
-                console.log(`✅ Đã tạo: ${store.storeName}`);
+                console.log(` Đã tạo: ${store.storeName}`);
                 console.log(`👤 Quản lý: ${store.manager}`);
                 console.log(`👥 Nhân viên: ${store.staff.length}`);
                 console.log(`🛍️  Sản phẩm: ${store.products.length}`);
@@ -277,9 +277,9 @@ const seedStores = async () => {
                 
                 // Cập nhật danh mục cho cửa hàng đã tồn tại nếu chưa có
                 if (!existing.categories || existing.categories.length === 0) {
-                    console.log(`🔄 Đang cập nhật danh mục cho cửa hàng đã có...`);
+                    console.log(`Đang cập nhật danh mục cho cửa hàng đã có...`);
                     
-                    // ✅ Safe approach without populate
+                    //  Safe approach without populate
                     const storeProducts = await Product.find({
                         _id: { $in: existing.products }
                     }).select('category');
@@ -294,7 +294,7 @@ const seedStores = async () => {
                         categories: categoryIds
                     });
                     
-                    console.log(`✅ Đã cập nhật ${existing.storeName} với ${categoryIds.length} danh mục`);
+                    console.log(` Đã cập nhật ${existing.storeName} với ${categoryIds.length} danh mục`);
                 }
             }
         }

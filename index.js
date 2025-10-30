@@ -1,10 +1,10 @@
-import express from 'express';
-import cors from 'cors';
-import dotenv from 'dotenv'
-import cookieParser from 'cookie-parser';
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 // Kết nối cơ sở dữ liệu
-import { connectDB } from './db/connectDB.js'
+import { connectDB } from "./db/connectDB.js";
 
 // Import các route
 import authRoutes from "./routes/auth.route.js";
@@ -24,7 +24,7 @@ import addressRoutes from "./routes/logistic/address.route.js";
 import geocodeRoutes from "./routes/logistic/geocode.route.js";
 import autocompleteRoutes from "./routes/logistic/autocomplete.route.js";
 
-dotenv.config()
+dotenv.config();
 
 // Debug environment variables
 console.log(" Backend Environment Debug:");
@@ -40,21 +40,22 @@ console.log(" CLIENT_URL_PROD:", process.env.CLIENT_URL_PROD);
 const app = express();
 const PORT = process.env.PORT || 5000; // PORT từ .env hoặc fallback về PORT mặc định 5000
 
-//! Cấu hình CORS 
-app.use(cors({
-    // origin: "http://localhost:5173",
-    origin: process.env.CLIENT_URL_PROD,
+//! Cấu hình CORS
+app.use(
+  cors({
+    origin: "http://localhost:5173",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: [
-        "Retry-After",
-        "RateLimit-Reset",
-        "RateLimit-Remaining",
-        "RateLimit-Limit",
-        "X-Debug-VerifyToken"
-    ]
-}));
+      "Retry-After",
+      "RateLimit-Reset",
+      "RateLimit-Remaining",
+      "RateLimit-Limit",
+      "X-Debug-VerifyToken",
+    ],
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser()); // cho phép chúng ta parse incoming cookies
@@ -71,7 +72,7 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/toppings", toppingRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/stores", storeRoutes);
-app.use("/api/cart", cartRoutes)
+app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 // Request routes
@@ -83,9 +84,9 @@ app.use("/api", geocodeRoutes);
 app.use("/api", autocompleteRoutes);
 
 app.listen(PORT, () => {
-    //! Hàm kết nối MongoDB
-    connectDB();
+  //! Hàm kết nối MongoDB
+  connectDB();
 
-    //! Console log để kiểm tra server đang chạy và chạy trên PORT nào 
-    console.log(`Server is running on port: ${PORT}`);
-})
+  //! Console log để kiểm tra server đang chạy và chạy trên PORT nào
+  console.log(`Server is running on port: ${PORT}`);
+});

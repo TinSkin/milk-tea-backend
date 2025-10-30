@@ -93,7 +93,7 @@ export const WELCOME_EMAIL_TEMPLATE = `
     </div>
     <p>Bây giờ bạn có thể:</p>
     <ul style="color: #555;">
-      <li>🛒 Đặt hàng trực tuyến</li>
+      <li> Đặt hàng trực tuyến</li>
       <li>🎁 Nhận ưu đãi đặc biệt</li>
       <li>⭐ Tích điểm thành viên</li>
       <li>📱 Theo dõi đơn hàng</li>

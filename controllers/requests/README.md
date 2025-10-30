@@ -269,9 +269,9 @@ session.endSession();
   → Khi test local, transaction vẫn chạy được nhưng rollback có thể bị giới hạn.
 - Nên luôn có try...catch...finally để:
 
-✅ commit khi thành công
+ commit khi thành công
 
-❌ abort khi lỗi
+ abort khi lỗi
 
 🔚 endSession sau cùng.
 
