@@ -351,7 +351,7 @@ export const resendVerificationEmail = async (req, res) => {
             ? process.env.CLIENT_URL_PROD
             : process.env.CLIENT_URL_DEV;
         console.log("Base URL for verification link:", base);
-        const verifyLink = `${base}verify-email?token=${encodeURIComponent(verificationToken)}`;
+        const verifyLink = `${base}/verify-email?token=${encodeURIComponent(verificationToken)}`;
         console.log("Verify link:", verifyLink);
 
         // Gửi email liên kết xác minh
@@ -496,7 +496,7 @@ export const forgotPassword = async (req, res) => {
                 ? process.env.CLIENT_URL_PROD
                 : process.env.CLIENT_URL_DEV;
             console.log("Base URL for reset link:", base);
-            const resetLink = `${base}reset-password/${resetToken}`;
+            const resetLink = `${base}/reset-password/${resetToken}`;
             console.log("Password reset link:", resetLink);
             await sendPasswordResetEmail(user.email, resetLink);
         }
